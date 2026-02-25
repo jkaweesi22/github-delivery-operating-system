@@ -1,0 +1,49 @@
+name: Release Approval
+description: Request production release approval with structured governance
+title: "[Approval] "
+labels: ["intake", "production", "risk"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Production Release Approval Request
+        Submit a release for approval. Include sprint reference, QA recommendation, and the Release Approver to tag. Do not hardcode usernames.
+
+  - type: input
+    id: sprint_reference
+    attributes:
+      label: Sprint Reference
+      description: Link to sprint planning issue (e.g., #12)
+      placeholder: "#12"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: qa_recommendation
+    attributes:
+      label: QA Recommendation
+      description: QA sign-off status for this release
+      options:
+        - Approve
+        - Reject
+        - Conditional
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk_summary
+    attributes:
+      label: Risk Summary
+      description: Key risks and mitigations
+      placeholder: Document known risks, rollback plan, and safeguards
+    validations:
+      required: true
+
+  - type: input
+    id: release_approver
+    attributes:
+      label: Release Approver GitHub Username
+      description: GitHub username to tag for release sign-off (include @)
+      placeholder: "@release-approver"
+    validations:
+      required: true

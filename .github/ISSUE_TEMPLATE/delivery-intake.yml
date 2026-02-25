@@ -1,0 +1,63 @@
+name: Delivery Intake
+description: Submit a feature request or bug report through the Delivery Operating System
+title: "[Intake] "
+labels: ["intake"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Delivery Intake Form
+        Use this form to submit feature requests or bug reports. All fields are required for governance tracking.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Intake Type
+      description: Select the type of intake
+      options:
+        - Feature Request
+        - Bug Report
+    validations:
+      required: true
+
+  - type: input
+    id: title
+    attributes:
+      label: Summary
+      description: Brief title or summary of the request
+      placeholder: e.g., Add export to CSV for sprint reports
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Detailed description of the feature or bug
+      placeholder: |
+        For features: Describe the desired behavior and business value.
+        For bugs: Describe the current behavior, expected behavior, and steps to reproduce.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Business priority
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true
+
+  - type: input
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Clear, testable acceptance criteria (comma-separated or bullet points)
+      placeholder: e.g., User can export sprint data as CSV; Export includes all visible columns
+    validations:
+      required: true

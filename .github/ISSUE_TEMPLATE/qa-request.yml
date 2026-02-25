@@ -1,0 +1,96 @@
+name: QA Request
+description: Request structured QA review with test scope and recommendation
+title: "[QA] "
+labels: ["intake", "qa"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## QA Request
+        Submit a QA review request with structured test scope and recommendation. Do not hardcode usernames.
+
+  - type: input
+    id: title_summary
+    attributes:
+      label: Title
+      description: Brief summary of the QA request
+      placeholder: e.g., Validate checkout flow for Sprint 12
+    validations:
+      required: true
+
+  - type: input
+    id: feature_reference
+    attributes:
+      label: Feature / Issue Reference
+      description: Link to related feature or issue (e.g., #42)
+      placeholder: "#42"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Target environment for testing
+      options:
+        - Development
+        - Staging
+        - Production
+        - All
+    validations:
+      required: true
+
+  - type: textarea
+    id: test_scope
+    attributes:
+      label: Test Scope
+      description: What to test and how
+      placeholder: |
+        - Unit tests for payment module
+        - E2E checkout flow
+        - Smoke test on staging
+    validations:
+      required: true
+
+  - type: dropdown
+    id: risk_assessment
+    attributes:
+      label: Risk Assessment
+      description: Initial risk level
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true
+
+  - type: dropdown
+    id: qa_recommendation
+    attributes:
+      label: QA Recommendation
+      description: Final QA sign-off status
+      options:
+        - Approve
+        - Reject
+        - Conditional
+    validations:
+      required: true
+
+  - type: input
+    id: qa_reviewer
+    attributes:
+      label: QA Reviewer GitHub Username
+      description: GitHub username to tag for review (include @)
+      placeholder: "@qa-reviewer"
+    validations:
+      required: true
+
+  - type: textarea
+    id: artifact_notes
+    attributes:
+      label: Artifact / Attachment Notes
+      description: Describe artifacts to upload or attach in comments
+      placeholder: e.g., Test report PDF, screenshots of critical paths
+    validations:
+      required: false

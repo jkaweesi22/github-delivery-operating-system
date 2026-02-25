@@ -1,0 +1,176 @@
+# Delivery OS – Sprint Orchestration
+# Reusable: parse sprint planning issue, create child issues, health summary
+name: Delivery OS – Sprint Orchestration
+
+on:
+  workflow_call:
+    inputs:
+      sprint_planning_label:
+        required: false
+        type: string
+        default: "sprint-planning"
+      sprint_label:
+        required: false
+        type: string
+        default: "sprint"
+      intake_label:
+        required: false
+        type: string
+        default: "intake"
+      issue_number:
+        required: false
+        type: number
+        description: "Override for workflow_dispatch; otherwise from event"
+      enable_child_task_creation:
+        required: false
+        type: boolean
+        default: false
+        description: "Create child issues from sprint deliverable lines"
+      enable_milestone_assignment:
+        required: false
+        type: boolean
+        default: false
+        description: "Assign parent milestone to child issues"
+
+jobs:
+  delivery-os-parse-and-create:
+    name: Parse sprint and create child issues
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Resolve sprint issue number
+        id: resolve
+        run: |
+          NUM="${{ inputs.issue_number }}"
+          if [ -z "$NUM" ] || [ "$NUM" == "0" ]; then
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          else
+            echo "number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fetch sprint issue
+        id: fetch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const num = ${{ steps.resolve.outputs.number }};
+            const { data } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: num
+            });
+            core.setOutput('title', data.title);
+            core.setOutput('body', data.body || '');
+            core.setOutput('milestone', data.milestone ? data.milestone.number : '');
+            core.setOutput('labels', JSON.stringify((data.labels || []).map(l => l.name)));
+            return data;
+
+      - name: Validate sprint planning issue
+        run: |
+          BODY="${{ steps.fetch.outputs.body }}"
+          LABELS="${{ steps.fetch.outputs.labels }}"
+          PLANNING_LABEL="${{ inputs.sprint_planning_label }}"
+          ENABLE_CHILD="${{ inputs.enable_child_task_creation }}"
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            ADDED_LABEL="${{ github.event.label.name }}"
+            if [ "${{ github.event.action }}" == "labeled" ]; then
+              if [ "$ADDED_LABEL" != "$PLANNING_LABEL" ]; then
+                echo "::notice::Label added was '$ADDED_LABEL', not '$PLANNING_LABEL'. Skipping."
+                exit 0
+              fi
+            else
+              if ! echo "$LABELS" | grep -q "$PLANNING_LABEL"; then
+                echo "::notice::Issue is not labeled '$PLANNING_LABEL'. Add the label to trigger orchestration."
+                exit 0
+              fi
+            fi
+          fi
+          if [ "$ENABLE_CHILD" == "true" ] && { [ -z "$BODY" ] || [ "$BODY" == "" ]; }; then
+            echo "::error::Sprint issue body is empty. Add line items (one per line) to create child issues."
+            exit 1
+          fi
+          echo "Validation passed."
+
+      - name: Check for prior orchestration (prevent duplicates)
+        id: prior
+        if: inputs.enable_child_task_creation == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const num = ${{ steps.resolve.outputs.number }};
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: num
+            });
+            const alreadyRun = comments.some(c => (c.body || '').includes('Sprint Health Summary'));
+            core.setOutput('already_run', alreadyRun);
+
+      - name: Parse entries and create child issues
+        id: create
+        if: inputs.enable_child_task_creation == true && steps.prior.outputs.already_run != 'true'
+        uses: actions/github-script@v7
+        env:
+          SPRINT_TITLE: ${{ steps.fetch.outputs.title }}
+          SPRINT_BODY: ${{ steps.fetch.outputs.body }}
+          SPRINT_NUMBER: ${{ steps.resolve.outputs.number }}
+          MILESTONE: ${{ steps.fetch.outputs.milestone }}
+          ENABLE_MILESTONE: ${{ inputs.enable_milestone_assignment }}
+          INTAKE_LABEL: ${{ inputs.intake_label }}
+          SPRINT_LABEL: ${{ inputs.sprint_label }}
+        with:
+          script: |
+            const lines = (process.env.SPRINT_BODY || '').split('\n').filter(Boolean);
+            const listLike = /^[-*]\s+.+|^\d+\.\s+.+/;
+            const entries = lines
+              .filter(l => listLike.test(l.trim()))
+              .map(l => l.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '').trim())
+              .filter(l => l.length > 2 && !l.startsWith('#') && !l.startsWith('---'));
+            const unique = [...new Set(entries)];
+            const created = [];
+            const parent = `#${process.env.SPRINT_NUMBER}`;
+            const enableMilestone = process.env.ENABLE_MILESTONE === 'true';
+            const milestone = enableMilestone && process.env.MILESTONE ? parseInt(process.env.MILESTONE, 10) : null;
+            const intakeLabel = process.env.INTAKE_LABEL || 'intake';
+            const sprintLabel = process.env.SPRINT_LABEL || 'sprint';
+            for (const entry of unique) {
+              const { data } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: entry,
+                body: `Sprint item from ${process.env.SPRINT_TITLE}\n\n**Parent:** ${parent}\n\n---\n*Created by Delivery OS Sprint Orchestration*`,
+                labels: [intakeLabel, sprintLabel]
+              });
+              if (milestone) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: data.number,
+                  milestone
+                });
+              }
+              created.push({ number: data.number, title: entry });
+            }
+            core.setOutput('created', JSON.stringify(created));
+            core.setOutput('count', created.length);
+            return created;
+
+      - name: Update sprint issue with child links
+        if: inputs.enable_child_task_creation == true && steps.prior.outputs.already_run != 'true'
+        uses: actions/github-script@v7
+        env:
+          CREATED: ${{ steps.create.outputs.created }}
+          SPRINT_NUMBER: ${{ steps.resolve.outputs.number }}
+        with:
+          script: |
+            const created = JSON.parse(process.env.CREATED || '[]');
+            const links = created.map(c => `- #${c.number} ${c.title}`).join('\n');
+            const summary = `## Sprint Health Summary\n\n| Metric | Value |\n|--------|-------|\n| Child issues created | ${created.length} |\n| Progress | 0% |\n\n### Child Issues\n\n${links}\n\n---\n*Delivery OS Sprint Orchestration completed*`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(process.env.SPRINT_NUMBER, 10),
+              body: summary
+            });

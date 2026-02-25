@@ -1,0 +1,28 @@
+# Copy to .github/workflows/delivery-os-telegram-alerts.yml
+# Replace your-org with your GitHub org or username
+# Reference @v1 (create tag v1.0.0 first)
+
+name: Enable Delivery OS – Telegram Alerts
+
+on:
+  pull_request:
+    types: [closed]
+  issues:
+    types: [labeled]
+
+jobs:
+  call-telegram-alerts:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      (github.event_name == 'issues' && (
+        contains(github.event.label.name, 'production') ||
+        contains(github.event.label.name, 'sprint-planning') ||
+        contains(github.event.label.name, 'risk')
+      ))
+    uses: your-org/github-delivery-operating-system/.github/workflows/telegram-alerts.yml@v1
+    with:
+      production_label: "production"
+      sprint_planning_label: "sprint-planning"
+      risk_label: "risk"
+      enable_telegram: true
+    secrets: inherit

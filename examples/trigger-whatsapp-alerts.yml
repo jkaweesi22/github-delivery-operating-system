@@ -1,0 +1,22 @@
+# Copy to .github/workflows/delivery-os-whatsapp-alerts.yml
+# Replace your-org with your GitHub org or username
+# Reference @v1 (create tag v1.0.0 first)
+
+name: Enable Delivery OS – WhatsApp Alerts
+
+on:
+  pull_request:
+    types: [closed]
+  issues:
+    types: [labeled]
+
+jobs:
+  call-whatsapp-alerts:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      (github.event_name == 'issues' && contains(github.event.label.name, 'production'))
+    uses: your-org/github-delivery-operating-system/.github/workflows/whatsapp-alerts.yml@v1
+    with:
+      production_label: "production"
+      enable_whatsapp: true
+    secrets: inherit

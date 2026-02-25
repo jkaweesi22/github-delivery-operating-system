@@ -1,0 +1,95 @@
+# Delivery OS – Telegram Alerts
+# Reusable: event-driven notifications (PR merged, production/sprint/risk labels)
+name: Delivery OS – Telegram Alerts
+
+on:
+  workflow_call:
+    inputs:
+      production_label:
+        required: false
+        type: string
+        default: "production"
+      sprint_planning_label:
+        required: false
+        type: string
+        default: "sprint-planning"
+      risk_label:
+        required: false
+        type: string
+        default: "risk"
+      enable_telegram:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      TELEGRAM_BOT_TOKEN:
+        required: false
+      TELEGRAM_CHAT_ID:
+        required: false
+
+jobs:
+  delivery-os-telegram-send:
+    name: Send Telegram notification
+    runs-on: ubuntu-latest
+    if: inputs.enable_telegram == true
+    continue-on-error: true
+    steps:
+      - name: Determine event type and payload
+        id: event
+        run: |
+          PROD="${{ inputs.production_label }}"
+          SPRINT="${{ inputs.sprint_planning_label }}"
+          RISK="${{ inputs.risk_label }}"
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "event_type=PR Merged" >> $GITHUB_OUTPUT
+            echo "title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+            echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "actor=${{ github.event.pull_request.merged_by.login }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "issues" ]; then
+            LABEL="${{ github.event.label.name }}"
+            if [ "$LABEL" == "$PROD" ]; then echo "event_type=Production Label Added" >> $GITHUB_OUTPUT
+            elif [ "$LABEL" == "$SPRINT" ]; then echo "event_type=Sprint Created" >> $GITHUB_OUTPUT
+            elif [ "$LABEL" == "$RISK" ]; then echo "event_type=Risk Label Added" >> $GITHUB_OUTPUT
+            else echo "event_type=Issue Labeled" >> $GITHUB_OUTPUT
+            fi
+            echo "title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+            echo "actor=${{ github.event.sender.login }}" >> $GITHUB_OUTPUT
+          else
+            echo "event_type=Manual Trigger" >> $GITHUB_OUTPUT
+            echo "title=N/A" >> $GITHUB_OUTPUT
+            echo "number=N/A" >> $GITHUB_OUTPUT
+            echo "actor=${{ github.actor }}" >> $GITHUB_OUTPUT
+          fi
+          echo "repo=${{ github.repository }}" >> $GITHUB_OUTPUT
+
+      - name: Build and send Telegram message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::notice::Telegram secrets not configured. Skipping."
+            exit 0
+          fi
+          EVENT="${{ steps.event.outputs.event_type }}"
+          TITLE="${{ steps.event.outputs.title }}"
+          NUM="${{ steps.event.outputs.number }}"
+          ACTOR="${{ steps.event.outputs.actor }}"
+          REPO="${{ steps.event.outputs.repo }}"
+          if [ "$NUM" == "N/A" ]; then
+            URL="https://github.com/${REPO}"
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            URL="https://github.com/${REPO}/pull/${NUM}"
+          else
+            URL="https://github.com/${REPO}/issues/${NUM}"
+          fi
+          TEXT="📦 *Delivery OS Alert*
+
+          *Event:* ${EVENT}
+          *Repo:* \`${REPO}\`
+          *Title:* ${TITLE}
+          *Triggered by:* @${ACTOR}
+          *Link:* ${URL}"
+          PAYLOAD=$(jq -n --arg text "$TEXT" --arg chat "$TELEGRAM_CHAT_ID" '{chat_id:$chat,text:$text,parse_mode:"Markdown"}')
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -H "Content-Type: application/json" -d "$PAYLOAD" || true

@@ -1,0 +1,30 @@
+# Copy to .github/workflows/delivery-os-sprint-orchestration.yml
+# Replace your-org with your GitHub org or username
+# Reference @v1 (create tag v1.0.0 first)
+
+name: Enable Delivery OS – Sprint Orchestration
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Sprint planning issue number"
+        required: true
+        type: number
+
+jobs:
+  call-sprint-orchestration:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'issues'
+    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-orchestration.yml@v1
+    with:
+      sprint_planning_label: "sprint-planning"
+      sprint_label: "sprint"
+      intake_label: "intake"
+      enable_child_task_creation: false
+      enable_milestone_assignment: false
+      issue_number: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+    secrets: inherit

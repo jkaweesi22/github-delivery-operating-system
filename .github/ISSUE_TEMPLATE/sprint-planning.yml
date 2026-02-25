@@ -1,0 +1,40 @@
+name: Sprint Planning
+description: Create a new sprint with structured deliverables
+title: "[Sprint] "
+labels: ["intake", "sprint-planning"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Sprint Planning
+        Add one deliverable per line. The Delivery OS will create child issues and track progress.
+        **Format:** One item per line (bullet or numbered list accepted)
+
+  - type: input
+    id: sprint_name
+    attributes:
+      label: Sprint Name
+      description: Short identifier for this sprint
+      placeholder: e.g., Sprint 12, Q1 Release
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      description: One deliverable per line. Start each line with - or a number.
+      placeholder: |
+        - Implement user authentication
+        - Add API rate limiting
+        - Refactor payment module
+    validations:
+      required: true
+
+  - type: datepicker
+    id: target_date
+    attributes:
+      label: Target End Date
+      description: Expected sprint completion date
+    validations:
+      required: true

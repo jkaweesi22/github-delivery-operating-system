@@ -1,0 +1,77 @@
+# Delivery OS – Intake Governance
+# Reusable: label-based lifecycle management, intake acknowledgment
+name: Delivery OS – Intake Governance
+
+on:
+  workflow_call:
+    inputs:
+      intake_label:
+        required: false
+        type: string
+        default: "intake"
+
+jobs:
+  delivery-os-apply-lifecycle:
+    name: Apply lifecycle labels
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Determine event context
+        id: context
+        run: |
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+            echo "labels=${{ toJSON(github.event.issue.labels.*.name) }}" >> $GITHUB_OUTPUT
+          else
+            echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "labels=${{ toJSON(github.event.pull_request.labels.*.name) }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Apply intake label for new items
+        if: github.event.action == 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const intakeLabel = '${{ inputs.intake_label }}';
+            const labels = ${{ steps.context.outputs.labels }};
+            const hasIntake = labels && labels.includes(intakeLabel);
+            if (!hasIntake) {
+              const target = github.context.payload.issue || github.context.payload.pull_request;
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: target.number,
+                labels: [intakeLabel]
+              });
+            }
+
+      - name: Post governance acknowledgment
+        if: github.event.action == 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const target = github.context.payload.issue || github.context.payload.pull_request;
+            const isIssue = !!github.context.payload.issue;
+            const prefix = isIssue ? 'Issue' : 'Pull request';
+            const intakeLabel = '${{ inputs.intake_label }}';
+            const body = `---
+            **Delivery OS Intake Governance** | ${prefix} received
+
+            This ${prefix.toLowerCase()} has been registered in the intake pipeline.
+
+            | Field | Value |
+            |-------|-------|
+            | Type | ${isIssue ? 'Issue' : 'Pull Request'} |
+            | Status | ${intakeLabel} |
+            | Repository | \`${context.repo.owner}/${context.repo.repo}\` |
+
+            *Governance automation will apply lifecycle labels as this item progresses.*
+            ---`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: target.number,
+              body: body
+            });

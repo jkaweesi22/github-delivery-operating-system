@@ -1,0 +1,23 @@
+# Copy to .github/workflows/delivery-os-release-control.yml
+# Replace your-org with your GitHub org or username
+# Reference @v1 (create tag v1.0.0 first)
+
+name: Enable Delivery OS – Release Control
+
+on:
+  issues:
+    types: [labeled]
+  pull_request:
+    types: [labeled]
+
+jobs:
+  call-release-control:
+    if: contains(github.event.label.name, 'production')
+    uses: your-org/github-delivery-operating-system/.github/workflows/release-control.yml@v1
+    with:
+      release_approver: "@release-approver"
+      production_label: "production"
+      enable_alerts: true
+      enable_telegram: true
+      enable_whatsapp: false
+    secrets: inherit

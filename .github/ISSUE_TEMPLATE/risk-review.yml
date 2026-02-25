@@ -1,0 +1,49 @@
+name: Risk Review
+description: Request production release with QA recommendation
+title: "[Release] "
+labels: ["intake", "risk", "production"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Production Release Request
+        Submit a release candidate for approval. Include sprint reference and QA recommendation.
+
+  - type: input
+    id: sprint_reference
+    attributes:
+      label: Sprint Reference
+      description: Link to sprint planning issue (e.g., #12)
+      placeholder: "#12"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: qa_recommendation
+    attributes:
+      label: QA Recommendation
+      description: QA sign-off status
+      options:
+        - Approve
+        - Reject
+        - Conditional
+    validations:
+      required: true
+
+  - type: textarea
+    id: release_notes
+    attributes:
+      label: Release Notes
+      description: Summary of changes in this release
+      placeholder: List key changes, fixes, and known limitations
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk_mitigation
+    attributes:
+      label: Risk Mitigation
+      description: Document any risks and how they are mitigated
+      placeholder: Describe rollback plan, monitoring, or other safeguards
+    validations:
+      required: true

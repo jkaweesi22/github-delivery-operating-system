@@ -1,0 +1,241 @@
+# Delivery OS – Release Control
+# Reusable: production approval gate, QA recommendation parsing, @release-approver
+name: Delivery OS – Release Control
+
+on:
+  workflow_call:
+    inputs:
+      release_approver:
+        required: false
+        type: string
+        default: "@release-approver"
+      default_release_approver:
+        required: false
+        type: string
+        description: "Fallback if issue body does not provide Release Approver GitHub Username"
+      production_label:
+        required: false
+        type: string
+        default: "production"
+      enable_alerts:
+        required: false
+        type: boolean
+        default: false
+      enable_telegram:
+        required: false
+        type: boolean
+        default: false
+      enable_whatsapp:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      TELEGRAM_BOT_TOKEN:
+        required: false
+      TELEGRAM_CHAT_ID:
+        required: false
+      WHATSAPP_ACCESS_TOKEN:
+        required: false
+      WHATSAPP_PHONE_NUMBER_ID:
+        required: false
+      WHATSAPP_RECIPIENT_NUMBER:
+        required: false
+      TWILIO_ACCOUNT_SID:
+        required: false
+      TWILIO_AUTH_TOKEN:
+        required: false
+      TWILIO_WHATSAPP_NUMBER:
+        required: false
+
+jobs:
+  delivery-os-release-gate:
+    name: Post approval gate
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Parse target and post release approval comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const target = github.context.payload.issue || github.context.payload.pull_request;
+            const body = target.body || '';
+            const bodyFlat = body.replace(/\n/g, ' ');
+
+            // Parse sprint reference
+            const sprintMatch = bodyFlat.match(/#\d+/);
+            const sprintRef = sprintMatch ? sprintMatch[0] : 'N/A';
+
+            // Parse QA recommendation
+            const qaMatch = bodyFlat.match(/(Approve|Reject|Conditional)/i);
+            const qaRec = qaMatch ? qaMatch[0] : 'Not specified';
+
+            // Parse Release Approver from issue body (GitHub form: ### Label \n\n value)
+            const releaseApproverSection = body.match(/Release Approver GitHub Username[^\n]*\n+\s*([^\n#]+)/i);
+            let approverFromBody = releaseApproverSection ? releaseApproverSection[1].trim() : null;
+            if (approverFromBody && !approverFromBody.startsWith('@')) approverFromBody = '@' + approverFromBody;
+            if (!approverFromBody || approverFromBody === '@') approverFromBody = null;
+
+            const defaultApprover = '${{ inputs.default_release_approver }}'.trim() || null;
+            const workflowApprover = '${{ inputs.release_approver }}'.trim() || null;
+            const approver = approverFromBody || defaultApprover || workflowApprover;
+
+            const isIssue = !!github.context.payload.issue;
+            const repoRef = `${context.repo.owner}/${context.repo.repo}`;
+
+            let commentBody;
+            if (approver) {
+              commentBody = `## 🚨 Release Approval Required
+
+            ${approver}
+
+            | Field | Value |
+            |-------|-------|
+            | Event | ${isIssue ? 'Issue' : 'Pull Request'} |
+            | Sprint | ${sprintRef} |
+            | QA Recommendation | ${qaRec} |
+            | Repository | \`${repoRef}\` |
+
+            Please review the QA recommendation and comment \`Approved for production\` or \`Release approved\` to sign off.
+
+            ---
+            *Delivery Operating System*`;
+            } else {
+              commentBody = `## Release Approval Gate
+
+            | Field | Value |
+            |-------|-------|
+            | Event | ${isIssue ? 'Issue' : 'Pull Request'} |
+            | Sprint Reference | ${sprintRef} |
+            | QA Recommendation | ${qaRec} |
+            | Repository | \`${repoRef}\` |
+
+            ### ⚠️ Approver Assignment Required
+            No Release Approver was specified. Please:
+            - Add a \`Release Approver GitHub Username\` field to this issue, or
+            - Configure \`default_release_approver\` in your trigger workflow, or
+            - Assign a release approver in the comments
+
+            ---
+            *Delivery Operating System*`;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: target.number,
+              body: commentBody
+            });
+
+  delivery-os-block-merge-check:
+    name: Advisory merge approval check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check for approval comment
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number
+            });
+            const hasApproval = comments.some(c =>
+              (c.body || '').toLowerCase().includes('approved for production') ||
+              (c.body || '').toLowerCase().includes('release approved')
+            );
+            core.setOutput('has_approval', hasApproval);
+
+      - name: Advisory warning if no approval
+        if: steps.check.outputs.has_approval != 'true'
+        run: |
+          echo "::notice::Production release requires explicit approval. A release approver must comment 'Approved for production' or 'Release approved' before merge."
+          echo "Configure branch protection rules to enforce approval."
+
+  delivery-os-telegram-alert:
+    name: Telegram notification
+    runs-on: ubuntu-latest
+    if: inputs.enable_alerts == true && inputs.enable_telegram == true
+    continue-on-error: true
+    steps:
+      - name: Build message
+        id: msg
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const target = github.context.payload.issue || github.context.payload.pull_request;
+            const isIssue = !!github.context.payload.issue;
+            const url = isIssue
+              ? `https://github.com/${context.repo.owner}/${context.repo.repo}/issues/${target.number}`
+              : `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${target.number}`;
+            const text = `📦 *Delivery OS Alert*
+
+            *Event:* Production Release Request
+            *Repo:* \`${context.repo.owner}/${context.repo.repo}\`
+            *Title:* ${target.title}
+            *Link:* ${url}`;
+            core.setOutput('text', text);
+
+      - name: Send Telegram notification
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::notice::Telegram secrets not configured. Skipping."
+            exit 0
+          fi
+          TEXT="${{ steps.msg.outputs.text }}"
+          PAYLOAD=$(jq -n --arg text "$TEXT" --arg chat "$TELEGRAM_CHAT_ID" '{chat_id:$chat,text:$text,parse_mode:"Markdown"}')
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -H "Content-Type: application/json" -d "$PAYLOAD" || true
+
+  delivery-os-whatsapp-alert:
+    name: WhatsApp notification
+    runs-on: ubuntu-latest
+    if: inputs.enable_alerts == true && inputs.enable_whatsapp == true
+    continue-on-error: true
+    steps:
+      - name: Build message
+        id: msg
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const target = github.context.payload.issue || github.context.payload.pull_request;
+            const isIssue = !!github.context.payload.issue;
+            const url = isIssue
+              ? `https://github.com/${context.repo.owner}/${context.repo.repo}/issues/${target.number}`
+              : `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${target.number}`;
+            const body = `🚨 Delivery OS Alert\n\nEvent: Production Release Request\nRepo: ${context.repo.owner}/${context.repo.repo}\nTitle: ${target.title}\nLink: ${url}`;
+            core.setOutput('body', body);
+
+      - name: Send via Meta WhatsApp
+        env:
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_RECIPIENT_NUMBER: ${{ secrets.WHATSAPP_RECIPIENT_NUMBER }}
+        run: |
+          MSG="${{ steps.msg.outputs.body }}"
+          if [ -z "$WHATSAPP_ACCESS_TOKEN" ] || [ -z "$WHATSAPP_PHONE_NUMBER_ID" ] || [ -z "$WHATSAPP_RECIPIENT_NUMBER" ]; then
+            echo "::notice::Meta WhatsApp secrets not configured. Skipping."
+            exit 0
+          fi
+          TO=$(echo "$WHATSAPP_RECIPIENT_NUMBER" | sed 's/^+//')
+          payload=$(jq -n --arg to "$TO" --arg msg "$MSG" '{messaging_product:"whatsapp",to:($to|tonumber),type:"text",text:{body:$msg}}')
+          curl -s -X POST "https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages" -H "Authorization: Bearer ${WHATSAPP_ACCESS_TOKEN}" -H "Content-Type: application/json" -d "$payload" || true
+
+      - name: Send via Twilio WhatsApp
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_WHATSAPP_NUMBER: ${{ secrets.TWILIO_WHATSAPP_NUMBER }}
+          WHATSAPP_RECIPIENT_NUMBER: ${{ secrets.WHATSAPP_RECIPIENT_NUMBER }}
+        run: |
+          MSG="${{ steps.msg.outputs.body }}"
+          if [ -z "$TWILIO_ACCOUNT_SID" ] || [ -z "$TWILIO_AUTH_TOKEN" ] || [ -z "$TWILIO_WHATSAPP_NUMBER" ] || [ -z "$WHATSAPP_RECIPIENT_NUMBER" ]; then
+            echo "::notice::Twilio WhatsApp secrets not configured. Skipping."
+            exit 0
+          fi
+          curl -s -X POST "https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json" -u "${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}" --data-urlencode "From=whatsapp:${TWILIO_WHATSAPP_NUMBER}" --data-urlencode "To=whatsapp:${WHATSAPP_RECIPIENT_NUMBER}" --data-urlencode "Body=${MSG}" || true

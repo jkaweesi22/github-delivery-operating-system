@@ -1,0 +1,18 @@
+# Copy to .github/workflows/delivery-os-intake-governance.yml
+# Replace your-org with your GitHub org or username
+# Reference @v1 (create tag v1.0.0 first)
+
+name: Enable Delivery OS – Intake Governance
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  pull_request:
+    types: [opened, edited, labeled]
+
+jobs:
+  call-intake-governance:
+    uses: your-org/github-delivery-operating-system/.github/workflows/intake-governance.yml@v1
+    with:
+      intake_label: "intake"
+    secrets: inherit

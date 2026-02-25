@@ -1,0 +1,107 @@
+# Delivery OS – WhatsApp Alerts
+# Reusable: Meta Cloud API or Twilio (PR merged, production label)
+name: Delivery OS – WhatsApp Alerts
+
+on:
+  workflow_call:
+    inputs:
+      production_label:
+        required: false
+        type: string
+        default: "production"
+      enable_whatsapp:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      WHATSAPP_ACCESS_TOKEN:
+        required: false
+      WHATSAPP_PHONE_NUMBER_ID:
+        required: false
+      WHATSAPP_RECIPIENT_NUMBER:
+        required: false
+      TWILIO_ACCOUNT_SID:
+        required: false
+      TWILIO_AUTH_TOKEN:
+        required: false
+      TWILIO_WHATSAPP_NUMBER:
+        required: false
+
+jobs:
+  delivery-os-whatsapp-send:
+    name: Send WhatsApp notification
+    runs-on: ubuntu-latest
+    if: inputs.enable_whatsapp == true
+    continue-on-error: true
+    steps:
+      - name: Determine event details
+        id: event
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "event_type=PR Merged" >> $GITHUB_OUTPUT
+            echo "title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+            echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "url=https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "qa_rec=N/A" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "issues" ]; then
+            echo "event_type=Production Release Request" >> $GITHUB_OUTPUT
+            echo "title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+            echo "url=https://github.com/${{ github.repository }}/issues/${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+            BODY="${{ github.event.issue.body }}"
+            QA=$(echo "$BODY" | grep -iE "(Approve|Reject|Conditional)" | head -1)
+            echo "qa_rec=${QA:-Not specified}" >> $GITHUB_OUTPUT
+          else
+            echo "event_type=Manual Trigger" >> $GITHUB_OUTPUT
+            echo "title=N/A" >> $GITHUB_OUTPUT
+            echo "number=N/A" >> $GITHUB_OUTPUT
+            echo "url=https://github.com/${{ github.repository }}" >> $GITHUB_OUTPUT
+            echo "qa_rec=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build message
+        id: msg
+        run: |
+          EVENT="${{ steps.event.outputs.event_type }}"
+          TITLE="${{ steps.event.outputs.title }}"
+          REPO="${{ github.repository }}"
+          URL="${{ steps.event.outputs.url }}"
+          QA="${{ steps.event.outputs.qa_rec }}"
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "🚨 Delivery OS Alert" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "Event: ${EVENT}" >> $GITHUB_OUTPUT
+          echo "Repo: ${REPO}" >> $GITHUB_OUTPUT
+          echo "Title: ${TITLE}" >> $GITHUB_OUTPUT
+          echo "QA Recommendation: ${QA}" >> $GITHUB_OUTPUT
+          echo "Link: ${URL}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Send via Meta WhatsApp Cloud API
+        env:
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_RECIPIENT_NUMBER: ${{ secrets.WHATSAPP_RECIPIENT_NUMBER }}
+        run: |
+          MSG="${{ steps.msg.outputs.body }}"
+          if [ -z "$WHATSAPP_ACCESS_TOKEN" ] || [ -z "$WHATSAPP_PHONE_NUMBER_ID" ] || [ -z "$WHATSAPP_RECIPIENT_NUMBER" ]; then
+            echo "::notice::Meta WhatsApp secrets not configured. Skipping."
+            exit 0
+          fi
+          TO=$(echo "$WHATSAPP_RECIPIENT_NUMBER" | sed 's/^+//')
+          payload=$(jq -n --arg to "$TO" --arg msg "$MSG" '{messaging_product:"whatsapp",to:($to|tonumber),type:"text",text:{body:$msg}}')
+          curl -s -X POST "https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages" -H "Authorization: Bearer ${WHATSAPP_ACCESS_TOKEN}" -H "Content-Type: application/json" -d "$payload" || true
+
+      - name: Send via Twilio WhatsApp API
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_WHATSAPP_NUMBER: ${{ secrets.TWILIO_WHATSAPP_NUMBER }}
+          WHATSAPP_RECIPIENT_NUMBER: ${{ secrets.WHATSAPP_RECIPIENT_NUMBER }}
+        run: |
+          MSG="${{ steps.msg.outputs.body }}"
+          if [ -z "$TWILIO_ACCOUNT_SID" ] || [ -z "$TWILIO_AUTH_TOKEN" ] || [ -z "$TWILIO_WHATSAPP_NUMBER" ] || [ -z "$WHATSAPP_RECIPIENT_NUMBER" ]; then
+            echo "::notice::Twilio WhatsApp secrets not configured. Skipping."
+            exit 0
+          fi
+          curl -s -X POST "https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json" -u "${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}" --data-urlencode "From=whatsapp:${TWILIO_WHATSAPP_NUMBER}" --data-urlencode "To=whatsapp:${WHATSAPP_RECIPIENT_NUMBER}" --data-urlencode "Body=${MSG}" || true
