@@ -9,7 +9,7 @@ The GitHub-native Delivery Operating System is a **reusable workflow library** t
 | Principle | Implementation |
 |-----------|----------------|
 | **Event-driven** | Workflows trigger on GitHub events (issues, PRs, labels) |
-| **Label-based governance** | Lifecycle stages enforced via labels: `intake`, `sprint`, `qa`, `production`, `risk`, `approved`, `rejected` |
+| **Label-based governance** | Lifecycle stages enforced via labels: `intake`, `bug`, `sprint`, `qa`, `production`, `risk`, `approved`, `rejected` |
 | **Structured intake** | YAML issue forms with required fields for features, bugs, sprints, releases |
 | **Controlled gates** | Production release requires approval comment and governance summary |
 | **Real-time visibility** | Telegram and WhatsApp alerts on key events |
@@ -65,7 +65,7 @@ flowchart TD
 | Workflow | Purpose |
 |----------|---------|
 | `intake-governance` | Apply intake label, post governance acknowledgment |
-| `sprint-orchestration` | Parse deliverables, create child issues, post health summary |
+| `sprint-orchestration` | Parse deliverables; optionally create child issues (disabled by default), post health summary |
 | `release-control` | Parse sprint ref and QA rec, post approval gate, mention approver; optional alerts |
 | `telegram-alerts` | Send formatted alert to Telegram |
 | `whatsapp-alerts` | Send formatted alert via Meta or Twilio WhatsApp |
@@ -80,21 +80,24 @@ Telegram and WhatsApp alerts are **optional, disabled by default**, and run as s
 
 | Template | Labels | Purpose |
 |----------|--------|---------|
-| `delivery-intake` | `intake` | Feature requests and bug reports with structured fields |
+| `delivery-intake` | `intake` | Feature requests and bug reports (combined) |
+| `bug-report` | `intake`, `bug` | Bug reports with steps to reproduce, environment, current/expected behavior |
 | `sprint-planning` | `intake`, `sprint-planning` | Sprint creation with line-item deliverables |
 | `risk-review` | `intake`, `risk`, `production` | Production release request with QA recommendation |
+| `qa-request` | `intake`, `qa` | QA review request with QA Reviewer username |
+| `release-approval` | `intake`, `production`, `risk` | Release approval with Release Approver username |
 
 ### Lifecycle Labels
 
 ```
 intake → sprint → qa → production → approved / rejected
-         risk
+  bug      risk
 ```
 
 ## Data Flow
 
 1. **Intake**: User submits issue via form → `intake` label applied → governance comment posted.
-2. **Sprint**: User creates sprint issue → `sprint-planning` label → workflow parses body → child issues created → health summary posted.
+2. **Sprint**: User creates sprint issue → `sprint-planning` label → workflow parses body → (if enabled) child issues created → health summary posted.
 3. **Release**: User adds `production` label → workflow parses sprint ref and QA rec → approval comment with @release-approver → merge blocked until approval.
 4. **Alerts**: Key events trigger Telegram and WhatsApp notifications with event type, repo, title, link.
 

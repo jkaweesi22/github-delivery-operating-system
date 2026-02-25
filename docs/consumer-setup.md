@@ -145,7 +145,7 @@ jobs:
   call-telegram-alerts:
     if: |
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-      (github.event_name == 'issues' && contains(github.event.label.name, 'production') || contains(github.event.label.name, 'sprint-planning') || contains(github.event.label.name, 'risk'))
+      (github.event_name == 'issues' && (contains(github.event.label.name, 'production') || contains(github.event.label.name, 'sprint-planning') || contains(github.event.label.name, 'risk')))
     uses: your-org/github-delivery-operating-system/.github/workflows/telegram-alerts.yml@v1
     with:
       production_label: "production"

@@ -18,16 +18,16 @@ flowchart LR
 
 ### 1. Intake
 
-- User submits issue via **Delivery Intake** or **Sprint Planning** or **Risk Review** form.
-- `intake` label applied automatically.
+- User submits issue via **Delivery Intake**, **Bug Report**, **Sprint Planning**, **Risk Review**, **QA Request**, or **Release Approval** form.
+- `intake` label applied automatically (Bug Report also applies `bug` for triage).
 - Governance acknowledgment comment posted.
 
 ### 2. Sprint
 
 - For sprint planning: add `sprint-planning` label.
-- Workflow parses deliverables (one per line), creates child issues, assigns milestone.
-- Child issues receive `intake` and `sprint` labels.
-- Sprint health summary comment posted.
+- Workflow parses deliverables (one per line).
+- If child task creation is enabled: creates child issues, optionally assigns milestone, posts health summary. Child issues receive `intake` and `sprint` labels.
+- If disabled (default): validates label only; no child creation.
 
 ### 3. QA
 
@@ -51,7 +51,7 @@ flowchart LR
 
 ### 6. Post-Release
 
-- Telegram and WhatsApp alerts sent on key events (PR merged, production label added).
+- Optional Telegram and WhatsApp alerts sent on key events (PR merged, production label added) when enabled in trigger workflows.
 - Labels can be updated to `approved` or `rejected` for audit trail.
 
 ## Sprint Reference Format

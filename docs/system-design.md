@@ -240,6 +240,7 @@ When a consumer trigger runs `uses: org/repo/.github/workflows/release-control.y
 | Template | Labels | Key Fields |
 |----------|--------|------------|
 | `delivery-intake.yml` | `intake` | Type, Summary, Description, Priority, Acceptance Criteria |
+| `bug-report.yml` | `intake`, `bug` | Summary, Environment, Steps to Reproduce, Current/Expected Behavior, Priority, Acceptance Criteria |
 | `sprint-planning.yml` | `intake`, `sprint-planning` | Sprint Name, Deliverables (textarea), Target Date |
 | `risk-review.yml` | `intake`, `risk`, `production` | Sprint Ref, QA Rec, Release Notes, Risk Mitigation |
 | `qa-request.yml` | `intake`, `qa` | Feature Ref, Environment, Test Scope, Risk Assessment, QA Rec, **QA Reviewer GitHub Username** |
@@ -387,7 +388,7 @@ Labels are applied manually or by issue templates; workflows react to their pres
 | `issues.labeled` | Always | intake-governance |
 | `issues.labeled` | Label = sprint-planning | sprint-orchestration |
 | `issues.labeled` | Label = production | release-control |
-| `issues.labeled` | Label = production/sprint/risk | telegram-alerts |
+| `issues.labeled` | Label = production, sprint-planning, or risk | telegram-alerts |
 | `issues.labeled` | Label = production | whatsapp-alerts |
 | `pull_request.opened` | Always | intake-governance |
 | `pull_request.closed` | merged == true | telegram-alerts, whatsapp-alerts |
@@ -478,7 +479,7 @@ Labels are applied manually or by issue templates; workflows react to their pres
 1. **New workflows** — Add `workflow_call` YAML; consumer adds trigger
 2. **New labels** — Inputs for label names; no code change for new labels
 3. **New alert channels** — Add job with `continue-on-error`; optional secrets
-4. **New issue templates** — Add YAML to `.github/ISSUE_TEMPLATE/`; consumers copy manually
+4. **New issue templates** — Add YAML to `.github/ISSUE_TEMPLATE/` (e.g., `bug-report.yml`); consumers copy manually
 5. **Custom parsing** — Extend `actions/github-script` blocks with new regex/logic
 
 ---

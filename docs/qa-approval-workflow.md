@@ -6,6 +6,20 @@ Structured QA requests and release approvals with dynamic @username tagging. No 
 
 ## Issue Templates
 
+### Bug Report (`bug-report.yml`)
+
+Use for structured bug reports with environment and reproduction steps.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| Summary | Yes | Brief title describing the bug |
+| Environment | Yes | Development, Staging, Production, All |
+| Steps to Reproduce | Yes | Numbered steps |
+| Current Behavior | Yes | What actually happens |
+| Expected Behavior | Yes | What should happen |
+| Priority | Yes | Low, Medium, High, Critical |
+| Acceptance Criteria | Yes | What "fixed" looks like |
+
 ### QA Request (`qa-request.yml`)
 
 Use for QA review requests with structured test scope and recommendation.

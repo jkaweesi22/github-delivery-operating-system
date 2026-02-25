@@ -70,6 +70,7 @@ Standardized lifecycle flow:
 
 ```
 intake → sprint → qa → production → approved / rejected
+  bug
 ```
 
 * Automatic intake labeling
@@ -82,7 +83,8 @@ intake → sprint → qa → production → approved / rejected
 
 Predefined templates for:
 
-* Delivery intake (features / bugs)
+* Delivery intake (features / bugs combined)
+* Bug report (dedicated, with steps to reproduce and environment)
 * Sprint planning
 * QA requests
 * Risk review

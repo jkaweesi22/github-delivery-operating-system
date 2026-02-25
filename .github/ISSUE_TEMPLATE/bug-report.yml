@@ -1,0 +1,84 @@
+name: Bug Report
+description: Report a bug through the Delivery Operating System
+title: "[Bug] "
+labels: ["intake", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+        Use this form to report bugs. Include steps to reproduce and environment details for faster triage.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Brief title describing the bug
+      placeholder: e.g., Login fails when 2FA is enabled
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Where the bug occurs
+      options:
+        - Development
+        - Staging
+        - Production
+        - All
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Numbered steps to reproduce the bug
+      placeholder: |
+        1. Go to...
+        2. Click on...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current Behavior
+      description: What actually happens
+      placeholder: Describe the incorrect or unexpected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What should happen
+      placeholder: Describe the correct or expected behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Business impact priority
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true
+
+  - type: input
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What "fixed" looks like (testable conditions)
+      placeholder: e.g., User can log in with 2FA enabled; no console errors
+    validations:
+      required: true

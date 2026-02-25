@@ -4,15 +4,39 @@ Step-by-step instructions for common tasks with the Delivery Operating System.
 
 ---
 
-## Prerequisites
+## First-Time Setup (Use in Another Repo)
+
+Before you can use the Delivery OS in a repository:
+
+1. **Install the trigger workflows** — Run the [installer](../scripts/install.sh) or manually copy files from `examples/` into `.github/workflows/` of your target repo. See [Consumer Setup](consumer-setup.md) for full instructions.
+2. **Create a release tag** in the Delivery OS repo: `git tag v1.0.0 && git push origin v1.0.0`
+3. **Add labels** in your consumer repo:
+   ```bash
+   gh label create intake --color "0E8A16"
+   gh label create bug --color "D93F0B"
+   gh label create sprint --color "1D76DB"
+   gh label create qa --color "FBCA04"
+   gh label create production --color "D93F0B"
+   gh label create risk --color "B60205"
+   gh label create sprint-planning --color "5319E7"
+   ```
+4. **Copy issue templates** (optional) — To use structured forms like "Delivery Intake", "Bug Report", or "Release Approval", copy `.github/ISSUE_TEMPLATE/*.yml` from this repo into your repo's `.github/ISSUE_TEMPLATE/`. Without templates, you can still use labels and workflows; forms just make data capture structured.
+
+Once installed, the sections below show how to use the system day-to-day.
+
+---
+
+## Prerequisites (For Day-to-Day Use)
 
 - The Delivery OS is installed in your repository (see [Consumer Setup](consumer-setup.md))
-- You have the required labels: `intake`, `sprint`, `qa`, `production`, `risk`, `sprint-planning`
-- Issue templates are available (copy from `.github/ISSUE_TEMPLATE/` if needed)
+- You have the required labels: `intake`, `bug`, `sprint`, `qa`, `production`, `risk`, `sprint-planning`
+- Issue templates are available (copy from this repo's `.github/ISSUE_TEMPLATE/` if needed)
 
 ---
 
 ## How to Submit a Feature Request or Bug Report
+
+### Option A: Delivery Intake (combined form)
 
 1. Go to your repository on GitHub.
 2. Click **Issues** → **New issue**.
@@ -26,6 +50,23 @@ Step-by-step instructions for common tasks with the Delivery Operating System.
 5. Click **Submit new issue**.
 
 **What happens:** The issue receives the `intake` label and a governance acknowledgment comment is posted.
+
+### Option B: Bug Report (dedicated form)
+
+1. Go to your repository on GitHub.
+2. Click **Issues** → **New issue**.
+3. Select **Bug Report**.
+4. Fill in the required fields:
+   - **Summary:** Brief title describing the bug
+   - **Environment:** Development, Staging, Production, or All
+   - **Steps to Reproduce:** Numbered steps to reproduce the bug
+   - **Current Behavior:** What actually happens
+   - **Expected Behavior:** What should happen
+   - **Priority:** Low, Medium, High, or Critical
+   - **Acceptance Criteria:** What "fixed" looks like (testable conditions)
+5. Click **Submit new issue**.
+
+**What happens:** The issue receives the `intake` and `bug` labels and a governance acknowledgment comment is posted.
 
 ---
 
@@ -69,7 +110,7 @@ Step-by-step instructions for common tasks with the Delivery Operating System.
 
 **What happens:** The issue receives `intake`, `production`, and `risk` labels. The Delivery OS posts an approval comment mentioning the Release Approver and asks them to comment `Approved for production` or `Release approved` to sign off.
 
-**Alternative:** Add the `production` label to an existing issue (e.g., from the Risk Review template) that already contains the required fields. The release-control workflow will parse it and post the approval gate.
+**Alternative:** Add the `production` label to an existing issue (e.g., from the Risk Review template) that contains sprint reference and QA recommendation. The Release Approver will be taken from your workflow's `default_release_approver` or `release_approver` input, since Risk Review does not include that field.
 
 ---
 
@@ -178,7 +219,9 @@ The central Delivery OS repository is not modified. You can reinstall later by r
 
 | Task | Action |
 |------|--------|
-| Submit feature/bug | New issue → Delivery Intake |
+| Install in another repo | Run `scripts/install.sh` or copy from `examples/`; add labels; optionally copy templates |
+| Submit feature | New issue → Delivery Intake |
+| Report bug | New issue → Bug Report (or Delivery Intake) |
 | Create sprint | New issue → Sprint Planning |
 | Request release | New issue → Release Approval (or add `production` to existing) |
 | Approve release | Comment `Approved for production` or `Release approved` |

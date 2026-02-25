@@ -14,6 +14,7 @@ The Delivery Operating System is built on four principles:
 | Stage | Label | Description |
 |-------|-------|-------------|
 | Intake | `intake` | New item received; awaiting triage |
+| Bug | `bug` | Bug report; tagged for bug triage (use with `intake`) |
 | Sprint | `sprint` | Assigned to a sprint; in progress |
 | QA | `qa` | Under quality assurance review |
 | Production | `production` | Release candidate; approval gate active |
@@ -48,7 +49,7 @@ Recommended branch protection settings:
 
 ## Structured Intake
 
-### Feature / Bug Intake
+### Feature / Bug Intake (delivery-intake)
 
 Required fields:
 
@@ -58,6 +59,18 @@ Required fields:
 - Priority
 - Acceptance criteria
 
+### Bug Report (bug-report)
+
+Required fields:
+
+- Summary
+- Environment (Development, Staging, Production, All)
+- Steps to reproduce
+- Current behavior
+- Expected behavior
+- Priority
+- Acceptance criteria (what "fixed" looks like)
+
 ### Sprint Planning
 
 Required fields:
@@ -66,7 +79,7 @@ Required fields:
 - Deliverables (one per line)
 - Target end date
 
-### Risk / Release Request
+### Risk Review
 
 Required fields:
 
@@ -75,14 +88,23 @@ Required fields:
 - Release notes
 - Risk mitigation
 
+### Release Approval
+
+Required fields:
+
+- Sprint reference
+- QA recommendation
+- Risk summary
+- Release Approver GitHub Username
+
 ## Automation Rules
 
 | Event | Automation |
 |-------|------------|
 | Issue/PR opened | Apply `intake` label; post acknowledgment |
-| Sprint issue with `sprint-planning` label | Parse deliverables; create child issues; post health summary |
+| Sprint issue with `sprint-planning` label | Parse deliverables; optionally create child issues (if enabled); post health summary |
 | `production` label added | Parse release details; post approval gate; mention approver |
-| PR merged | Send Telegram + WhatsApp alert |
-| `production` label added | Send Telegram + WhatsApp alert |
-| `sprint-planning` label added | Send Telegram alert |
-| `risk` label added | Send Telegram alert |
+| PR merged | Send Telegram + WhatsApp alert (if enabled) |
+| `production` label added | Send Telegram + WhatsApp alert (if enabled) |
+| `sprint-planning` label added | Send Telegram alert (if enabled) |
+| `risk` label added | Send Telegram alert (if enabled) |
