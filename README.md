@@ -2,6 +2,8 @@
 
 > A GitHub-native Delivery Governance Framework for structured sprint execution, QA review, and collaborative production release control.
 
+**Repository:** [https://github.com/jkaweesi22/github-delivery-operating-system](https://github.com/jkaweesi22/github-delivery-operating-system)
+
 ---
 
 ## Why This Exists
@@ -261,7 +263,7 @@ Reusable workflows execute in the consumer repository context with no disruption
 
 ```bash
 # Clone this repository
-gh repo clone your-org/github-delivery-operating-system
+gh repo clone https://github.com/jkaweesi22/github-delivery-operating-system
 cd github-delivery-operating-system
 
 # Create a release tag first
@@ -269,7 +271,7 @@ git tag v1.0.0
 git push origin v1.0.0
 
 # Run installer into your consumer repo (never overwrites)
-REPO_ORG=your-org ./scripts/install.sh /path/to/your-repo
+REPO_ORG=jkaweesi22 ./scripts/install.sh /path/to/your-repo
 ```
 
 ### Option B: Manual Copy

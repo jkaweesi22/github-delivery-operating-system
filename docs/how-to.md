@@ -6,9 +6,29 @@ Step-by-step instructions for common tasks with the Delivery Operating System.
 
 ## First-Time Setup (Use in Another Repo)
 
+### REPO_ORG
+
+**REPO_ORG** is the GitHub organization or username that owns the Delivery OS repository. It appears in the `uses:` path of trigger workflows:
+
+```
+uses: REPO_ORG/github-delivery-operating-system/.github/workflows/<workflow>.yml@v1
+```
+
+- **This repository:** [https://github.com/jkaweesi22/github-delivery-operating-system](https://github.com/jkaweesi22/github-delivery-operating-system) → `REPO_ORG=jkaweesi22`
+- **Organization example:** `https://github.com/acme-corp/github-delivery-operating-system` → `REPO_ORG=acme-corp`
+- **Personal account example:** `https://github.com/johndoe/github-delivery-operating-system` → `REPO_ORG=johndoe`
+
+The installer replaces `your-org` in trigger files with the value of `REPO_ORG`. If omitted, workflows will fail until you edit them manually.
+
+---
+
 Before you can use the Delivery OS in a repository:
 
-1. **Install the trigger workflows** — Run the [installer](../scripts/install.sh) or manually copy files from `examples/` into `.github/workflows/` of your target repo. See [Consumer Setup](consumer-setup.md) for full instructions.
+1. **Install the trigger workflows** — From the Delivery OS repo, run:
+   ```bash
+   REPO_ORG=jkaweesi22 ./scripts/install.sh /path/to/your-repo
+   ```
+   Or `./scripts/install.sh .` when run from inside your consumer repo. Replace `jkaweesi22` with your GitHub org or username if using a different source repo. See [Consumer Setup](consumer-setup.md) for full instructions.
 2. **Create a release tag** in the Delivery OS repo: `git tag v1.0.0 && git push origin v1.0.0`
 3. **Add labels** in your consumer repo:
    ```bash
@@ -23,6 +43,76 @@ Before you can use the Delivery OS in a repository:
 4. **Copy issue templates** (optional) — To use structured forms like "Delivery Intake", "Bug Report", or "Release Approval", copy `.github/ISSUE_TEMPLATE/*.yml` from this repo into your repo's `.github/ISSUE_TEMPLATE/`. Without templates, you can still use labels and workflows; forms just make data capture structured.
 
 Once installed, the sections below show how to use the system day-to-day.
+
+---
+
+## Ways to Integrate
+
+---
+
+### Option A: Run the installer (most automated)
+
+One command copies all workflow files with the correct names and org. Both repos must exist **locally** (cloned on your machine).
+
+1. Clone both repos locally (if not already):
+
+   ```bash
+   git clone https://github.com/jkaweesi22/github-delivery-operating-system
+   git clone https://github.com/you/your-project    # your consumer repo
+   ```
+
+2. From the Delivery OS folder, run the installer:
+
+   ```bash
+   cd github-delivery-operating-system
+   REPO_ORG=jkaweesi22 ./scripts/install.sh ../your-project
+   ```
+
+   The installer creates all 5 trigger workflows in your consumer repo and substitutes `jkaweesi22`. `../your-project` is the path to your consumer repo (use a relative or absolute path).
+
+3. Add labels in your consumer repo (via UI or `gh label create`), then commit and push.
+
+---
+
+### Option B: GitHub Web UI (no command line)
+
+Integrate entirely in the browser:
+
+1. **Create workflow files** in your consumer repo:
+   - Go to your repo → **Add file** → **Create new file**
+   - Enter `.github/workflows/delivery-os-intake-governance.yml` (create the folder if prompted)
+   - Copy content from [Delivery OS examples](https://github.com/jkaweesi22/github-delivery-operating-system/tree/main/examples) — open each `trigger-*.yml`, click **Raw**, copy the text
+   - Create files named `delivery-os-intake-governance.yml`, `delivery-os-sprint-orchestration.yml`, etc. (one per trigger)
+   - In each file, replace `your-org` with `jkaweesi22` in the `uses:` line
+
+2. **Create labels**:
+   - Go to your repo → **Issues** → **Labels** → **New label**
+   - Add: `intake` (0E8A16), `bug` (D93F0B), `sprint` (1D76DB), `qa` (FBCA04), `production` (D93F0B), `risk` (B60205), `sprint-planning` (5319E7)
+
+3. **Ensure a tag exists** in the Delivery OS repo — the workflows reference `@v1`. If none exists, create one: **Releases** → **Create a new release** → tag `v1.0.0`.
+
+4. **Optional:** Copy issue templates from `.github/ISSUE_TEMPLATE/` in the Delivery OS repo into your repo via **Add file** → **Upload files** or **Create new file**.
+
+---
+
+### Option C: Manual copy (command line)
+
+Skip the installer and copy files yourself:
+
+1. In your consumer repo, create `.github/workflows/` if it doesn't exist.
+2. Copy each `examples/trigger-*.yml` → `.github/workflows/delivery-os-*.yml`.
+3. In each file, replace `your-org` with `jkaweesi22` (or your fork's org).
+4. Add labels in your consumer repo.
+
+---
+
+### Other cases
+
+| Situation | What to do |
+|-----------|------------|
+| You forked the Delivery OS repo | Use your org as `REPO_ORG` when running the installer (e.g. `REPO_ORG=my-org`). |
+| You only want some workflows | Run the installer, then delete the `delivery-os-*.yml` files you don't need. |
+| Consumer repo is in a different folder | Use the full path: `./scripts/install.sh /Users/me/other-folder/my-project` |
 
 ---
 
@@ -219,7 +309,7 @@ The central Delivery OS repository is not modified. You can reinstall later by r
 
 | Task | Action |
 |------|--------|
-| Install in another repo | Run `scripts/install.sh` or copy from `examples/`; add labels; optionally copy templates |
+| Install in another repo | Run installer (Option A) or use GitHub UI; add labels |
 | Submit feature | New issue → Delivery Intake |
 | Report bug | New issue → Bug Report (or Delivery Intake) |
 | Create sprint | New issue → Sprint Planning |
