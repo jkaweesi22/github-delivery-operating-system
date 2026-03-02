@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
 # GitHub Delivery Operating System — Safe, Non-Destructive Installer
-# Copies trigger examples only. Never overwrites. Fails safely.
+# Copies trigger examples. Optionally copies issue templates. Never overwrites.
 
 set -e
 
 REPO_ORG="${REPO_ORG:-your-org}"
 REPO_NAME="${REPO_NAME:-github-delivery-operating-system}"
 VERSION="${VERSION:-v1}"
-TARGET_DIR="${1:-.}"
+
+# Parse args: [--with-templates] [target_dir]
+TARGET_DIR="."
+WITH_TEMPLATES=false
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --with-templates) WITH_TEMPLATES=true; shift ;;
+    *) TARGET_DIR="$1"; shift ;;
+  esac
+done
 
 echo "=== GitHub Delivery Operating System ==="
 echo ""
@@ -57,9 +66,31 @@ for example in "$EXAMPLES_DIR"/trigger-*.yml; do
   COPIED=$((COPIED + 1))
 done
 
+# 6. Optionally copy issue templates (skip existing files)
+TEMPLATES_COPIED=0
+if [ "$WITH_TEMPLATES" = true ]; then
+  TEMPLATES_SRC="$(dirname "$0")/../.github/ISSUE_TEMPLATE"
+  if [ -d "$TEMPLATES_SRC" ]; then
+    mkdir -p "${TARGET_DIR}/.github/ISSUE_TEMPLATE"
+    for tpl in "$TEMPLATES_SRC"/*.yml; do
+      [ -f "$tpl" ] || continue
+      name=$(basename "$tpl")
+      dest="${TARGET_DIR}/.github/ISSUE_TEMPLATE/${name}"
+      if [ -f "$dest" ]; then
+        echo "  Skipped (exists): ${name}"
+      else
+        cp "$tpl" "$dest"
+        echo "  Created template: ${name}"
+        TEMPLATES_COPIED=$((TEMPLATES_COPIED + 1))
+      fi
+    done
+  fi
+fi
+
 echo ""
 if [ $COPIED -gt 0 ]; then
   echo "Installed ${COPIED} trigger workflow(s)."
+  [ $TEMPLATES_COPIED -gt 0 ] && echo "Copied ${TEMPLATES_COPIED} issue template(s)."
   echo ""
   echo "Next steps:"
   echo "  1. Create release tag in Delivery OS repo: git tag v1.0.0 && git push origin v1.0.0"
@@ -72,9 +103,11 @@ if [ $COPIED -gt 0 ]; then
   echo "     gh label create risk --color B60205"
   echo "     gh label create sprint-planning --color 5319E7"
   echo "  3. Add secrets (optional, for alerts): gh secret set TELEGRAM_BOT_TOKEN"
-  echo "  4. Copy issue templates (optional): From Delivery OS repo, run:"
-  echo "     mkdir -p ${TARGET_DIR}/.github/ISSUE_TEMPLATE"
-  echo "     cp .github/ISSUE_TEMPLATE/*.yml ${TARGET_DIR}/.github/ISSUE_TEMPLATE/"
+  if [ "$WITH_TEMPLATES" = false ]; then
+    echo "  4. Copy issue templates (optional): re-run with --with-templates, or run:"
+    echo "     mkdir -p ${TARGET_DIR}/.github/ISSUE_TEMPLATE"
+    echo "     cp .github/ISSUE_TEMPLATE/*.yml ${TARGET_DIR}/.github/ISSUE_TEMPLATE/"
+  fi
   echo ""
   echo "See docs/consumer-setup.md and docs/how-to.md for full configuration."
 else

@@ -272,6 +272,9 @@ git push origin v1.0.0
 
 # Run installer into your consumer repo (never overwrites)
 REPO_ORG=jkaweesi22 ./scripts/install.sh /path/to/your-repo
+
+# Optional: include issue templates (Delivery Intake, Bug Report, etc.)
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates /path/to/your-repo
 ```
 
 ### Option B: Manual Copy

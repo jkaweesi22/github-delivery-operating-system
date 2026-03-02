@@ -4,115 +4,231 @@ Step-by-step instructions for common tasks with the Delivery Operating System.
 
 ---
 
-## First-Time Setup (Use in Another Repo)
+## STEP-BY-STEP: Install Delivery OS Into Another Repo
 
-### REPO_ORG
+You have 3 ways. The recommended path is Option A.
 
-**REPO_ORG** is the GitHub organization or username that owns the Delivery OS repository. It appears in the `uses:` path of trigger workflows:
+---
 
+### OPTION A — Recommended (Installer Script)
+
+Use this if you're comfortable with the terminal.
+
+#### Step 1: Clone Both Repositories Locally
+
+You need:
+
+- The Delivery OS repo
+- The repo you want to install it into (your consumer repo)
+
+```bash
+git clone https://github.com/jkaweesi22/github-delivery-operating-system
+git clone https://github.com/YOUR-USERNAME/YOUR-CONSUMER-REPO
 ```
-uses: REPO_ORG/github-delivery-operating-system/.github/workflows/<workflow>.yml@v1
+
+Replace `YOUR-USERNAME` and `YOUR-CONSUMER-REPO` with your GitHub username and repo name.
+
+#### Step 2: Run the Installer
+
+Go into the Delivery OS folder:
+
+```bash
+cd github-delivery-operating-system
 ```
 
-- **This repository:** [https://github.com/jkaweesi22/github-delivery-operating-system](https://github.com/jkaweesi22/github-delivery-operating-system) → `REPO_ORG=jkaweesi22`
-- **Organization example:** `https://github.com/acme-corp/github-delivery-operating-system` → `REPO_ORG=acme-corp`
-- **Personal account example:** `https://github.com/johndoe/github-delivery-operating-system` → `REPO_ORG=johndoe`
+Then run:
 
-The installer replaces `your-org` in trigger files with the value of `REPO_ORG`. If omitted, workflows will fail until you edit them manually.
+```bash
+REPO_ORG=jkaweesi22 ./scripts/install.sh ../YOUR-CONSUMER-REPO
+```
 
----
+**What this does:**
 
-Before you can use the Delivery OS in a repository:
+- Copies all 5 trigger workflows into your consumer repo
+- Replaces `your-org` with `jkaweesi22` in each file
+- Installs workflow files automatically
 
-1. **Install the trigger workflows** — From the Delivery OS repo, run:
-   ```bash
-   REPO_ORG=jkaweesi22 ./scripts/install.sh /path/to/your-repo
-   ```
-   Or `./scripts/install.sh .` when run from inside your consumer repo. Replace `jkaweesi22` with your GitHub org or username if using a different source repo. See [Consumer Setup](consumer-setup.md) for full instructions.
-2. **Create a release tag** in the Delivery OS repo: `git tag v1.0.0 && git push origin v1.0.0`
-3. **Add labels** in your consumer repo:
-   ```bash
-   gh label create intake --color "0E8A16"
-   gh label create bug --color "D93F0B"
-   gh label create sprint --color "1D76DB"
-   gh label create qa --color "FBCA04"
-   gh label create production --color "D93F0B"
-   gh label create risk --color "B60205"
-   gh label create sprint-planning --color "5319E7"
-   ```
-4. **Copy issue templates** (optional) — To use structured forms like "Delivery Intake", "Bug Report", or "Release Approval", copy `.github/ISSUE_TEMPLATE/*.yml` from this repo into your repo's `.github/ISSUE_TEMPLATE/`. Without templates, you can still use labels and workflows; forms just make data capture structured.
+**Optional — include issue templates** (Delivery Intake, Bug Report, Sprint Planning, etc.):
 
-Once installed, the sections below show how to use the system day-to-day.
+```bash
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates ../YOUR-CONSUMER-REPO
+```
 
----
+If you're using a fork, replace `jkaweesi22` with your fork owner.
 
-## Ways to Integrate
+#### Step 3: Commit & Push in Consumer Repo
 
----
+```bash
+cd ../YOUR-CONSUMER-REPO
+git add .
+git commit -m "Install Delivery OS"
+git push
+```
 
-### Option A: Run the installer (most automated)
+#### Step 4: Add Required Labels
 
-One command copies all workflow files with the correct names and org. Both repos must exist **locally** (cloned on your machine).
+In your consumer repo on GitHub:
 
-1. Clone both repos locally (if not already):
+1. Go to **Issues** → **Labels** → **New label**
+2. Create these labels:
 
-   ```bash
-   git clone https://github.com/jkaweesi22/github-delivery-operating-system
-   git clone https://github.com/you/your-project    # your consumer repo
-   ```
+| Label | Color |
+|-------|-------|
+| intake | 0E8A16 |
+| bug | D93F0B |
+| sprint | 1D76DB |
+| qa | FBCA04 |
+| production | D93F0B |
+| risk | B60205 |
+| sprint-planning | 5319E7 |
 
-2. From the Delivery OS folder, run the installer:
+Or via terminal (from your consumer repo): `gh label create intake --color 0E8A16` (repeat for each).
 
-   ```bash
-   cd github-delivery-operating-system
-   REPO_ORG=jkaweesi22 ./scripts/install.sh ../your-project
-   ```
+#### Step 5: Ensure a Tag Exists in Delivery OS Repo
 
-   The installer creates all 5 trigger workflows in your consumer repo and substitutes `jkaweesi22`. `../your-project` is the path to your consumer repo (use a relative or absolute path).
+In the [Delivery OS repo](https://github.com/jkaweesi22/github-delivery-operating-system):
 
-3. Add labels in your consumer repo (via UI or `gh label create`), then commit and push.
+1. Go to **Releases** → **Create new release**
+2. Tag: `v1.0.0`
+3. Publish
 
----
-
-### Option B: GitHub Web UI (no command line)
-
-Integrate entirely in the browser:
-
-1. **Create workflow files** in your consumer repo:
-   - Go to your repo → **Add file** → **Create new file**
-   - Enter `.github/workflows/delivery-os-intake-governance.yml` (create the folder if prompted)
-   - Copy content from [Delivery OS examples](https://github.com/jkaweesi22/github-delivery-operating-system/tree/main/examples) — open each `trigger-*.yml`, click **Raw**, copy the text
-   - Create files named `delivery-os-intake-governance.yml`, `delivery-os-sprint-orchestration.yml`, etc. (one per trigger)
-   - In each file, replace `your-org` with `jkaweesi22` in the `uses:` line
-
-2. **Create labels**:
-   - Go to your repo → **Issues** → **Labels** → **New label**
-   - Add: `intake` (0E8A16), `bug` (D93F0B), `sprint` (1D76DB), `qa` (FBCA04), `production` (D93F0B), `risk` (B60205), `sprint-planning` (5319E7)
-
-3. **Ensure a tag exists** in the Delivery OS repo — the workflows reference `@v1`. If none exists, create one: **Releases** → **Create a new release** → tag `v1.0.0`.
-
-4. **Optional:** Copy issue templates from `.github/ISSUE_TEMPLATE/` in the Delivery OS repo into your repo via **Add file** → **Upload files** or **Create new file**.
+Workflows reference `@v1`. Without a tag, workflows will fail.
 
 ---
 
-### Option C: Manual copy (command line)
+### OPTION B — No Terminal (GitHub Web Only)
 
-Skip the installer and copy files yourself:
+Use this if you don't want to use the command line.
 
-1. In your consumer repo, create `.github/workflows/` if it doesn't exist.
-2. Copy each `examples/trigger-*.yml` → `.github/workflows/delivery-os-*.yml`.
-3. In each file, replace `your-org` with `jkaweesi22` (or your fork's org).
-4. Add labels in your consumer repo.
+#### Step 1: Create Workflow Files in Consumer Repo
+
+In your consumer repo:
+
+1. Click **Add file** → **Create new file**
+2. Create path: `.github/workflows/delivery-os-intake-governance.yml`
+3. Go to [Delivery OS examples](https://github.com/jkaweesi22/github-delivery-operating-system/tree/main/examples)
+4. Open each `trigger-*.yml` file
+5. Click **Raw**
+6. Copy the content
+7. Paste into your new file
+8. Replace `your-org` with `jkaweesi22` in the `uses:` line
+9. Commit the file
+
+Repeat for all 5 triggers: `trigger-intake-governance`, `trigger-sprint-orchestration`, `trigger-release-control`, `trigger-telegram-alerts`, `trigger-whatsapp-alerts`. Create files named `delivery-os-intake-governance.yml`, `delivery-os-sprint-orchestration.yml`, etc.
+
+#### Step 2: Add Labels
+
+Same as Option A, Step 4 — create all 7 labels via **Issues** → **Labels**.
+
+#### Step 3: Ensure Tag Exists
+
+Create `v1.0.0` release in the Delivery OS repo if it doesn't exist.
 
 ---
 
-### Other cases
+### OPTION C — Manual Copy (Command Line)
+
+If you prefer to copy files yourself:
+
+1. Create `.github/workflows/` in your consumer repo
+2. Copy each `examples/trigger-*.yml` → `.github/workflows/delivery-os-*.yml`
+3. In each file, replace `your-org` with `jkaweesi22`
+4. Add labels (same as Option A, Step 4)
+
+---
+
+### After Installation — How It Works
+
+Once installed:
+
+| When you... | Delivery OS does... |
+|-------------|---------------------|
+| Create issue with intake | Governance comment posted |
+| Create sprint issue | Validates sprint |
+| Add `production` label | Triggers release approval logic |
+| Approver comments "Approved for production" | Signals release approval |
+| Enable alerts (Telegram/WhatsApp) | Sends notifications on key events |
+
+---
+
+### REPO_ORG (Reference)
+
+`REPO_ORG` is the GitHub organization or username that owns the Delivery OS repo. The installer uses it to replace `your-org` in trigger files. For this repo: `REPO_ORG=jkaweesi22`.
+
+---
+
+### Other Cases
 
 | Situation | What to do |
 |-----------|------------|
-| You forked the Delivery OS repo | Use your org as `REPO_ORG` when running the installer (e.g. `REPO_ORG=my-org`). |
+| You forked the Delivery OS repo | Use your org as `REPO_ORG` (e.g. `REPO_ORG=my-org`). |
 | You only want some workflows | Run the installer, then delete the `delivery-os-*.yml` files you don't need. |
-| Consumer repo is in a different folder | Use the full path: `./scripts/install.sh /Users/me/other-folder/my-project` |
+| Consumer repo in a different folder | Use full path: `./scripts/install.sh /path/to/consumer-repo` |
+
+---
+
+### Installation Options: All vs Separate
+
+#### Install all templates
+
+```bash
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates ../YOUR-CONSUMER-REPO
+```
+
+Copies all 7 templates: `delivery-intake.yml`, `bug-report.yml`, `sprint-planning.yml`, `risk-review.yml`, `qa-request.yml`, `release-approval.yml`, `config.yml`.
+
+---
+
+#### Install separate templates (only some)
+
+The installer doesn't support picking individual templates. Use manual copy:
+
+1. Go to [Delivery OS issue templates](https://github.com/jkaweesi22/github-delivery-operating-system/tree/main/.github/ISSUE_TEMPLATE)
+2. Open each template you want (e.g. `bug-report.yml`), click **Raw**
+3. In your consumer repo: **Add file** → **Create new file** → `.github/ISSUE_TEMPLATE/bug-report.yml`
+4. Paste the content and commit
+
+**Available templates:**
+
+| Template | Use for |
+|----------|---------|
+| delivery-intake.yml | Feature requests and bugs (combined form) |
+| bug-report.yml | Bug reports with steps to reproduce |
+| sprint-planning.yml | Sprint creation with deliverables |
+| risk-review.yml | Production release request with QA rec |
+| qa-request.yml | QA review request with QA Reviewer |
+| release-approval.yml | Release approval with Release Approver |
+| config.yml | Blank issues + contact links (optional) |
+
+---
+
+#### Install separate workflows (only some)
+
+**Option 1 — Install all, then remove**
+
+```bash
+REPO_ORG=jkaweesi22 ./scripts/install.sh ../YOUR-CONSUMER-REPO
+cd ../YOUR-CONSUMER-REPO
+rm .github/workflows/delivery-os-telegram-alerts.yml    # Remove ones you don't need
+rm .github/workflows/delivery-os-whatsapp-alerts.yml
+```
+
+**Option 2 — Manual copy of specific triggers**
+
+1. Go to [Delivery OS examples](https://github.com/jkaweesi22/github-delivery-operating-system/tree/main/examples)
+2. Copy only the `trigger-*.yml` files you need
+3. Save as `delivery-os-*.yml` in `.github/workflows/` of your consumer repo
+4. Replace `your-org` with `jkaweesi22` in each file
+
+**Available workflows:**
+
+| Workflow | Trigger file | Purpose |
+|----------|--------------|---------|
+| Intake governance | trigger-intake-governance.yml | Apply intake label, post acknowledgment |
+| Sprint orchestration | trigger-sprint-orchestration.yml | Parse sprint deliverables, optional child issues |
+| Release control | trigger-release-control.yml | Approval gate, QA parsing, approver tagging |
+| Telegram alerts | trigger-telegram-alerts.yml | Notifications (PR merged, production/sprint/risk labels) |
+| WhatsApp alerts | trigger-whatsapp-alerts.yml | Notifications (PR merged, production label) |
 
 ---
 
