@@ -1,6 +1,6 @@
 # Copy to .github/workflows/delivery-os-authorize-deployment.yml
 # Replace your-org with your GitHub org or username
-# Reference @v1 (create tag v1.0.0 first)
+# Use @main for latest, or @v1.0.0 (create tag first: git tag v1.0.0 && git push origin v1.0.0)
 # Requires dual approval: release approver + QA lead must both comment approval
 
 name: Enable Delivery OS – Authorize Deployment (Dual Approval)
@@ -12,7 +12,7 @@ on:
 jobs:
   call-authorize-deployment:
     if: contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
-    uses: your-org/github-delivery-operating-system/.github/workflows/authorize-deployment.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/authorize-deployment.yml@main
     with:
       release_approver_username: "aMugabi"
       qa_approver_username: "jkaweesi22"

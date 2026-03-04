@@ -86,7 +86,7 @@ flowchart TD
 | `telegram-alerts` | Send formatted alert to Telegram |
 | `whatsapp-alerts` | Send formatted alert via Meta or Twilio WhatsApp |
 
-Consumer repos create trigger workflows with `on: issues`, `pull_request`, `issue_comment`, etc., and call these via `uses: org/repo/.github/workflows/<name>.yml@v1`.
+Consumer repos create trigger workflows with `on: issues`, `pull_request`, `issue_comment`, etc., and call these via `uses: org/repo/.github/workflows/<name>.yml@main`.
 
 ### Modular Alerting
 

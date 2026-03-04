@@ -19,19 +19,20 @@ Integration is **additive**, **opt-in**, and **reversible**.
 
 ## Minimal Integration
 
-### 1. Reference a Tagged Release
+### 1. Reference the Workflow
 
-**Always use a version tag.** Do not reference `@main` in production.
+Use `@main` for latest, or pin to a tag (e.g. `@v1.0.0`) for production stability:
 
 ```
-uses: your-org/github-delivery-operating-system/.github/workflows/<workflow>.yml@v1
+uses: your-org/github-delivery-operating-system/.github/workflows/<workflow>.yml@main
 ```
 
-Create a `v1` tag before first use:
+To pin to a specific version, create a tag first:
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
+Then use `@v1.0.0` in your workflow references.
 
 ### 2. Add Trigger Workflows
 
@@ -58,7 +59,7 @@ jobs:
         (github.event.action == 'labeled' && github.event.label.name == 'production') ||
         (github.event.action == 'opened' && contains(join(github.event.issue.labels.*.name, ','), 'production'))
       ))
-    uses: your-org/github-delivery-operating-system/.github/workflows/release-control.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/release-control.yml@main
     with:
       release_approver: "@release-approver"
       production_label: "production"
@@ -90,7 +91,7 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'issues'
-    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-orchestration.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-orchestration.yml@main
     with:
       sprint_planning_label: "sprint-planning"
       sprint_label: "sprint"
@@ -124,7 +125,7 @@ on:
 
 jobs:
   call-sprint-child-creator:
-    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@main
     with:
       title_prefix: "SPRINT -"
       sprint_label: "sprint"
@@ -145,7 +146,7 @@ on:
 
 jobs:
   call-notify-release-approver:
-    uses: your-org/github-delivery-operating-system/.github/workflows/notify-release-approver.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/notify-release-approver.yml@main
     with:
       release_approver_username: "aMugabi"
       production_label: "production"
@@ -165,7 +166,7 @@ on:
 
 jobs:
   call-authorize-deployment:
-    uses: your-org/github-delivery-operating-system/.github/workflows/authorize-deployment.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/authorize-deployment.yml@main
     with:
       release_approver_username: "aMugabi"
       qa_approver_username: "jkaweesi22"
@@ -185,7 +186,7 @@ on:
 
 jobs:
   call-auto-close-sprint:
-    uses: your-org/github-delivery-operating-system/.github/workflows/auto-close-sprint.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/auto-close-sprint.yml@main
     with:
       enable_telegram_alert: false
     secrets: inherit
@@ -206,7 +207,7 @@ on:
 
 jobs:
   call-intake-governance:
-    uses: your-org/github-delivery-operating-system/.github/workflows/intake-governance.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/intake-governance.yml@main
     with:
       intake_label: "intake"
     secrets: inherit
@@ -233,7 +234,7 @@ jobs:
       github.event_name == 'issues' ||
       github.event_name == 'issue_comment' ||
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
-    uses: your-org/github-delivery-operating-system/.github/workflows/telegram-alerts.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/telegram-alerts.yml@main
     with:
       bug_label: "bug"
       qa_label: "qa"
@@ -267,7 +268,7 @@ jobs:
     if: |
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
       (github.event_name == 'issues' && contains(github.event.label.name, 'production'))
-    uses: your-org/github-delivery-operating-system/.github/workflows/whatsapp-alerts.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/whatsapp-alerts.yml@main
     with:
       production_label: "production"
       enable_whatsapp: true

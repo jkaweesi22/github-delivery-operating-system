@@ -103,7 +103,7 @@ In the [Delivery OS repo](https://github.com/jkaweesi22/github-delivery-operatin
 2. Tag: `v1.0.0`
 3. Publish
 
-Workflows reference `@v1`. Without a tag, workflows will fail.
+Workflows reference `@main` by default and work immediately. Use `@v1.0.0` to pin to a tag for production stability.
 
 ---
 

@@ -1,6 +1,4 @@
-# Copy to .github/workflows/delivery-os-telegram-alerts.yml
-# Replace your-org with your GitHub org or username
-# Use @main for latest, or @v1.0.0 (create tag first: git tag v1.0.0 && git push origin v1.0.0)
+# Enable Delivery OS – Telegram Alerts (self-test)
 # Phanerooapp-style: issues opened/closed/reopened, comments, PR merged
 
 name: Enable Delivery OS – Telegram Alerts
@@ -19,7 +17,7 @@ jobs:
       github.event_name == 'issues' ||
       github.event_name == 'issue_comment' ||
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
-    uses: your-org/github-delivery-operating-system/.github/workflows/telegram-alerts.yml@main
+    uses: jkaweesi22/github-delivery-operating-system/.github/workflows/telegram-alerts.yml@main
     with:
       bug_label: "bug"
       qa_label: "qa"

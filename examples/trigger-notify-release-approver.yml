@@ -1,6 +1,6 @@
 # Copy to .github/workflows/delivery-os-notify-release-approver.yml
 # Replace your-org with your GitHub org or username
-# Reference @v1 (create tag v1.0.0 first)
+# Use @main for latest, or @v1.0.0 (create tag first: git tag v1.0.0 && git push origin v1.0.0)
 
 name: Enable Delivery OS – Notify Release Approver
 
@@ -11,7 +11,7 @@ on:
 jobs:
   call-notify-release-approver:
     if: contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
-    uses: your-org/github-delivery-operating-system/.github/workflows/notify-release-approver.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/notify-release-approver.yml@main
     with:
       release_approver_username: "aMugabi"
       production_label: "production"

@@ -190,8 +190,7 @@ Governance does not depend on external messaging tools.
 ### 10. Semantic Versioning & Stability
 
 * Tagged releases (`v1.x`)
-* Consumers reference `@v1` or specific versions
-* No production use of `@main`
+* Consumers use `@main` for latest, or pin to `@v1.0.0` for production
 * Backward compatibility within major versions
 
 Ensures governance stability across repositories.
@@ -267,10 +266,6 @@ Reusable workflows execute in the consumer repository context with no disruption
 gh repo clone https://github.com/jkaweesi22/github-delivery-operating-system
 cd github-delivery-operating-system
 
-# Create a release tag first
-git tag v1.0.0
-git push origin v1.0.0
-
 # Run installer into your consumer repo (never overwrites)
 REPO_ORG=jkaweesi22 ./scripts/install.sh /path/to/your-repo
 
@@ -285,7 +280,7 @@ REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels /path/to/your-repo
 
 1. Copy trigger files from `examples/` to `.github/workflows/` in your repo
 2. Replace `your-org` with your org/username
-3. Ensure `@v1` tag exists in this repository
+3. Workflows use `@main` by default; optionally create a tag for pinning
 
 **See [Consumer Setup Guide](docs/consumer-setup.md)** for full integration steps, secret configuration, and uninstall instructions.
 

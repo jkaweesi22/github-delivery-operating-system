@@ -1,6 +1,6 @@
 # Copy to .github/workflows/delivery-os-sprint-child-creator.yml
 # Replace your-org with your GitHub org or username
-# Reference @v1 (create tag v1.0.0 first)
+# Use @main for latest, or @v1.0.0 (create tag first: git tag v1.0.0 && git push origin v1.0.0)
 # Creates child issues when a sprint planning issue is opened (title must start with "SPRINT -")
 
 name: Enable Delivery OS – Sprint Child Creator
@@ -11,7 +11,7 @@ on:
 
 jobs:
   call-sprint-child-creator:
-    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@v1
+    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@main
     with:
       title_prefix: "SPRINT -"
       sprint_label: "sprint"

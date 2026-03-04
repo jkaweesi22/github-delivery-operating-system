@@ -20,7 +20,7 @@ The **GitHub Delivery Operating System** (Delivery OS) is a **centralized govern
 |----------|----------------|
 | **Reusability** | `workflow_call` — consumer repos invoke workflows from a central repository |
 | **Non-destructiveness** | Never overwrites files; additive integration only |
-| **Versioning** | Semantic versioning; consumers reference `@v1` or `@v1.0.0`, never `@main` |
+| **Versioning** | Use `@main` for latest; pin to `@v1.0.0` for production stability |
 | **Configurability** | All governance behavior driven by workflow inputs; no hardcoded org/user names |
 | **Modularity** | Alerting and child task creation are optional, disabled by default |
 
@@ -54,7 +54,7 @@ The **GitHub Delivery Operating System** (Delivery OS) is a **centralized govern
 │           │                    │                    │            │
 │           │  uses: org/repo/   │  uses: org/repo/   │  uses:     │
 │           │  .github/workflows  │  .github/workflows │  org/repo/ │
-│           │  /intake-*.yml@v1  │  /sprint-*.yml@v1  │  ...@v1    │
+│           │  /intake-*.yml@main│  /sprint-*.yml@main│  ...@main  │
 └───────────┼────────────────────┼────────────────────┼────────────┘
             │                    │                    │
             ▼                    ▼                    ▼
@@ -112,7 +112,7 @@ The **GitHub Delivery Operating System** (Delivery OS) is a **centralized govern
 
 ### 3.2 Execution Context
 
-When a consumer trigger runs `uses: org/repo/.github/workflows/release-control.yml@v1`:
+When a consumer trigger runs `uses: org/repo/.github/workflows/release-control.yml@main`:
 
 1. **Trigger workflow** runs in consumer repo; receives `github.event` (issue, PR, labels)
 2. **Reusable workflow** is invoked; it receives the **same** `github.event` and `github.repository`
@@ -543,8 +543,8 @@ Labels are applied manually or by issue templates; workflows react to their pres
 | Aspect | Design |
 |--------|--------|
 | Tag format | `v1.0.0`, `v1.1.0`, `v2.0.0` |
-| Consumer reference | `@v1` or `@v1.0.0` |
-| Prohibited | `@main` in production |
+| Consumer reference | `@main` (latest) or `@v1.0.0` (pinned) |
+| Prohibited | — |
 | Upgrade path | Update `uses:` to new tag; test in staging |
 | Backward compat | v1.x maintains input compatibility |
 

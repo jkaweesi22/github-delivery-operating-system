@@ -6,7 +6,7 @@ set -e
 
 REPO_ORG="${REPO_ORG:-your-org}"
 REPO_NAME="${REPO_NAME:-github-delivery-operating-system}"
-VERSION="${VERSION:-v1}"
+VERSION="${VERSION:-main}"
 
 # Parse args: [--with-templates] [--with-labels] [target_dir]
 TARGET_DIR="."
@@ -63,7 +63,7 @@ for example in "$EXAMPLES_DIR"/trigger-*.yml; do
   basename=$(basename "$example" .yml)
   target_name="${TRIGGER_PREFIX}${basename#trigger-}"
   target_path="${TARGET_DIR}/.github/workflows/${target_name}.yml"
-  sed "s/your-org/${REPO_ORG}/g;s/@v1/@${VERSION}/g" "$example" > "$target_path"
+  sed "s/your-org/${REPO_ORG}/g;s/@main/@${VERSION}/g" "$example" > "$target_path"
   echo "  Created: ${target_name}.yml"
   COPIED=$((COPIED + 1))
 done
@@ -133,7 +133,7 @@ if [ $COPIED -gt 0 ]; then
   [ $LABELS_CREATED -gt 0 ] && echo "Created ${LABELS_CREATED} label(s)."
   echo ""
   echo "Next steps:"
-  echo "  1. Create release tag in Delivery OS repo: git tag v1.0.0 && git push origin v1.0.0"
+  echo "  1. (Optional) Pin to a release tag: git tag v1.0.0 && git push origin v1.0.0, then set VERSION=v1.0.0"
   if [ $LABELS_CREATED -eq 0 ]; then
     echo "  2. Add labels in consumer repo (or re-run with --with-labels):"
     echo "     gh label create intake --color 0E8A16"
