@@ -47,5 +47,5 @@ body:
     attributes:
       label: Deployment Authorized
       options:
-        - Yes
-        - No
+        - "Yes"
+        - "No"
