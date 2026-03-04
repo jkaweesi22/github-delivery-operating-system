@@ -10,6 +10,8 @@ on:
 
 jobs:
   call-auto-close-sprint:
+    permissions:
+      issues: write
     if: contains(github.event.issue.body || '', 'Parent Sprint')
     uses: your-org/github-delivery-operating-system/.github/workflows/auto-close-sprint.yml@main
     with:

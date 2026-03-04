@@ -11,6 +11,8 @@ on:
 
 jobs:
   call-authorize-deployment:
+    permissions:
+      issues: write
     if: contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
     uses: your-org/github-delivery-operating-system/.github/workflows/authorize-deployment.yml@main
     with:

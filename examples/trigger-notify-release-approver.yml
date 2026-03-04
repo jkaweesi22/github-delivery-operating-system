@@ -10,6 +10,8 @@ on:
 
 jobs:
   call-notify-release-approver:
+    permissions:
+      issues: write
     if: contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
     uses: your-org/github-delivery-operating-system/.github/workflows/notify-release-approver.yml@main
     with:

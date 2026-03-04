@@ -12,6 +12,9 @@ on:
 
 jobs:
   call-release-control:
+    permissions:
+      issues: write
+      pull-requests: write
     if: |
       github.event_name == 'pull_request' && contains(github.event.label.name, 'production') ||
       github.event_name == 'issues' && (

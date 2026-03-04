@@ -11,6 +11,9 @@ on:
 
 jobs:
   call-sprint-child-creator:
+    permissions:
+      issues: write
+      contents: read
     uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@main
     with:
       title_prefix: "SPRINT -"

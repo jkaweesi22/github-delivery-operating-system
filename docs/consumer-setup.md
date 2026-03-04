@@ -53,6 +53,9 @@ on:
 
 jobs:
   call-release-control:
+    permissions:
+      issues: write
+      pull-requests: write
     if: |
       (github.event_name == 'pull_request' && contains(github.event.label.name, 'production')) ||
       (github.event_name == 'issues' && (
@@ -88,6 +91,9 @@ on:
 
 jobs:
   call-sprint-orchestration:
+    permissions:
+      issues: write
+      contents: read
     if: |
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'issues'
@@ -125,6 +131,9 @@ on:
 
 jobs:
   call-sprint-child-creator:
+    permissions:
+      issues: write
+      contents: read
     uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@main
     with:
       title_prefix: "SPRINT -"
@@ -146,6 +155,9 @@ on:
 
 jobs:
   call-notify-release-approver:
+    permissions:
+      issues: write
+    if: contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
     uses: your-org/github-delivery-operating-system/.github/workflows/notify-release-approver.yml@main
     with:
       release_approver_username: "aMugabi"
@@ -166,6 +178,9 @@ on:
 
 jobs:
   call-authorize-deployment:
+    permissions:
+      issues: write
+    if: contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
     uses: your-org/github-delivery-operating-system/.github/workflows/authorize-deployment.yml@main
     with:
       release_approver_username: "aMugabi"
@@ -186,6 +201,9 @@ on:
 
 jobs:
   call-auto-close-sprint:
+    permissions:
+      issues: write
+    if: contains(github.event.issue.body || '', 'Parent Sprint')
     uses: your-org/github-delivery-operating-system/.github/workflows/auto-close-sprint.yml@main
     with:
       enable_telegram_alert: false
@@ -207,6 +225,9 @@ on:
 
 jobs:
   call-intake-governance:
+    permissions:
+      issues: write
+      pull-requests: write
     uses: your-org/github-delivery-operating-system/.github/workflows/intake-governance.yml@main
     with:
       intake_label: "intake"

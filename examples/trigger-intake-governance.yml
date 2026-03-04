@@ -12,6 +12,9 @@ on:
 
 jobs:
   call-intake-governance:
+    permissions:
+      issues: write
+      pull-requests: write
     uses: your-org/github-delivery-operating-system/.github/workflows/intake-governance.yml@main
     with:
       intake_label: "intake"
