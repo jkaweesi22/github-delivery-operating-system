@@ -1,0 +1,114 @@
+# Delivery OS – Sprint Child Issue Creator
+# Reusable: create child issues from Sprint Features when sprint issue is opened
+# Triggers on title "SPRINT -" (Phanerooapp-style)
+name: Delivery OS – Sprint Child Creator
+
+on:
+  workflow_call:
+    inputs:
+      sprint_label:
+        required: false
+        type: string
+        default: "sprint"
+      intake_label:
+        required: false
+        type: string
+        default: "intake"
+      title_prefix:
+        required: false
+        type: string
+        default: "SPRINT -"
+        description: "Title prefix to detect sprint issues (e.g. SPRINT -)"
+      sprint_active_label:
+        required: false
+        type: string
+        default: ""
+        description: "Optional label for child issues (enables sprint task Telegram alerts)"
+
+jobs:
+  delivery-os-create-children:
+    name: Create child issues from sprint features
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    steps:
+      - name: Check title prefix
+        id: check
+        run: |
+          TITLE="${{ github.event.issue.title }}"
+          PREFIX="${{ inputs.title_prefix }}"
+          if [[ "$TITLE" == "$PREFIX"* ]]; then
+            echo "is_sprint=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_sprint=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract Sprint Features
+        id: extract
+        if: steps.check.outputs.is_sprint == 'true'
+        run: |
+          BODY="${{ github.event.issue.body }}"
+          # Extract lines between "### Sprint Features" and next ### (GitHub form format)
+          FEATURES=$(echo "$BODY" | \
+            awk '/^### Sprint Features/{flag=1;next}/^###/{if(flag) exit}flag' | \
+            sed '/^[[:space:]]*$/d')
+
+          echo "features<<EOF" >> $GITHUB_OUTPUT
+          echo "$FEATURES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Child Issues
+        if: steps.check.outputs.is_sprint == 'true' && steps.extract.outputs.features != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SPRINT_LABEL: ${{ inputs.sprint_label }}
+          INTAKE_LABEL: ${{ inputs.intake_label }}
+          SPRINT_ACTIVE_LABEL: ${{ inputs.sprint_active_label }}
+        run: |
+          parent_number="${{ github.event.issue.number }}"
+          parent_title="${{ github.event.issue.title }}"
+
+          while IFS= read -r feature; do
+            feature=$(echo "$feature" | xargs)
+            [ -z "$feature" ] && continue
+
+            if [ -n "$SPRINT_ACTIVE_LABEL" ]; then
+              gh issue create \
+                --title "$feature" \
+                --body "Parent Sprint: #$parent_number
+
+---
+*Created by Delivery OS Sprint Child Creator*" \
+                --label "$INTAKE_LABEL" \
+                --label "$SPRINT_LABEL" \
+                --label "$SPRINT_ACTIVE_LABEL"
+            else
+              gh issue create \
+                --title "$feature" \
+                --body "Parent Sprint: #$parent_number
+
+---
+*Created by Delivery OS Sprint Child Creator*" \
+                --label "$INTAKE_LABEL" \
+                --label "$SPRINT_LABEL"
+            fi
+          done <<< "${{ steps.extract.outputs.features }}"
+
+      - name: Post summary comment
+        if: steps.check.outputs.is_sprint == 'true' && steps.extract.outputs.features != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          count=$(echo "${{ steps.extract.outputs.features }}" | grep -c . 2>/dev/null || echo "0")
+          gh issue comment "${{ github.event.issue.number }}" \
+            --body "## Sprint Child Issues Created
+
+| Metric | Value |
+|--------|-------|
+| Child issues created | $count |
+| Progress | 0% |
+
+---
+*Delivery OS Sprint Child Creator*"

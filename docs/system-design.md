@@ -62,8 +62,9 @@ The **GitHub Delivery Operating System** (Delivery OS) is a **centralized govern
 │            CENTRAL REPOSITORY (Delivery OS)                      │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │ Reusable Workflows (workflow_call)                            ││
-│  │ intake-governance | sprint-orchestration | release-control    ││
-│  │ telegram-alerts | whatsapp-alerts                             ││
+│  │ intake-governance | sprint-orchestration | sprint-child-creator││
+│  │ release-control | auto-close-sprint | notify-release-approver ││
+│  │ authorize-deployment | telegram-alerts | whatsapp-alerts      ││
 │  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
             │
@@ -161,10 +162,11 @@ When a consumer trigger runs `uses: org/repo/.github/workflows/release-control.y
 
 **Deliverable Parsing Logic:**
 
-- Lines matching `^[-*]\s+.+` or `^\d+\.\s+.+` (bullet or numbered list)
+- **Format 1 (Sprint Features):** Section `### Sprint Features` — one feature per line, no bullets
+- **Format 2 (legacy):** Lines matching `^[-*]\s+.+` or `^\d+\.\s+.+` (bullet or numbered list)
 - Trim bullets/numbers; filter out `#`-prefixed and `---`
 - Deduplicate via `Set`
-- Create one issue per unique entry; body includes parent reference
+- Create one issue per unique entry; body includes `Parent Sprint: #N` for auto-close compatibility
 
 **Inputs:**
 
@@ -178,6 +180,24 @@ When a consumer trigger runs `uses: org/repo/.github/workflows/release-control.y
 | `enable_milestone_assignment` | `false` | Assign parent milestone to children |
 
 **Duplicate Prevention:** `already_run` is true if any comment contains "Sprint Health Summary". Prevents re-creation on edit.
+
+---
+
+### 4.2b Sprint Child Creator Workflow
+
+**File:** `.github/workflows/sprint-child-creator.yml`  
+**Trigger:** Called by consumer on `issues.opened`
+
+Standalone workflow that creates child issues when a sprint issue is opened. Simpler alternative to sprint-orchestration with `enable_child_task_creation`.
+
+| Step | Action | Condition |
+|------|--------|-----------|
+| Check title prefix | Title must start with `SPRINT -` | Always |
+| Extract Sprint Features | awk between `### Sprint Features` and next `###` | Always |
+| Create child issues | One per line; body `Parent Sprint: #N` | Features non-empty |
+| Post summary comment | Child count, progress 0% | After create |
+
+**Inputs:** `title_prefix`, `sprint_label`, `intake_label`
 
 ---
 
@@ -198,8 +218,8 @@ When a consumer trigger runs `uses: org/repo/.github/workflows/release-control.y
 **Body Parsing:**
 
 1. **Sprint reference:** Regex `/#\d+/` → first `#12`-style reference
-2. **QA recommendation:** Regex `/(Approve|Reject|Conditional)/i` → first match
-3. **Release approver:** Section `### Release Approver GitHub Username` → next line value; normalized to `@username`
+2. **QA recommendation:** Regex for "Approve for Production", "Reject Release", "Conditional Approval", or legacy Approve/Reject/Conditional
+3. **Release approver:** Section `### Release Approver GitHub Username` (if present) → next line value; else use workflow inputs
 
 **Approver Resolution Order:**
 
@@ -212,15 +232,52 @@ When a consumer trigger runs `uses: org/repo/.github/workflows/release-control.y
 
 ---
 
+### 4.3b Notify Release Approver Workflow
+
+**File:** `.github/workflows/notify-release-approver.yml`  
+**Trigger:** Called when production release issue is opened
+
+Posts a comment pinging the release approver with sprint reference and QA recommendation. Configurable `release_approver_username` and `project_name`.
+
+---
+
+### 4.3c Authorize Deployment Workflow
+
+**File:** `.github/workflows/authorize-deployment.yml`  
+**Trigger:** Called on `issue_comment.created` (consumer filter for production issues)
+
+Requires dual approval: release approver and QA lead must both comment approval. Adds `ready-for-deploy` when both approve. Release approver can decline (adds `declined` label). Configurable usernames via inputs.
+
+---
+
+### 4.3d Auto Close Sprint Workflow
+
+**File:** `.github/workflows/auto-close-sprint.yml`  
+**Trigger:** Called on `issues.closed`
+
+When a child issue (body contains `Parent Sprint: #N`) is closed, fetches parent sprint, computes progress and burn-down, updates sprint body. Auto-closes sprint when 100% complete. Optional Telegram alert on completion.
+
+---
+
 ### 4.4 Telegram Alerts Workflow
 
 **File:** `.github/workflows/telegram-alerts.yml`  
-**Trigger:** PR merged, or `production` / `sprint-planning` / `risk` label added
+**Trigger:** Issues (opened/closed/reopened), issue_comment (created), pull_request (closed, merged to main)
 
-| Step | Action |
-|------|--------|
-| Determine event type | Map event to "PR Merged", "Production Label Added", etc. |
-| Build and send | Construct Markdown message; POST to `api.telegram.org/bot{token}/sendMessage` |
+Phanerooapp-style event-driven notifications. Filters by labels; sends only when issue matches bug, qa, qa-request, sprint+planning, sprint-active, or production.
+
+| Event | Labels | Message |
+|-------|--------|---------|
+| issues.opened/closed/reopened | bug | BUG OPENED/CLOSED/REOPENED |
+| issues | qa, qa-request | QA REQUEST OPENED/CLOSED/REOPENED |
+| issues.opened | sprint+planning or sprint-planning | SPRINT CREATED |
+| issues | sprint-active | SPRINT TASK CREATED/COMPLETED |
+| issues | production | PRODUCTION RELEASE CREATED/CLOSED |
+| issue_comment | production + approver | RELEASE APPROVED/DECLINED |
+| issue_comment | bug, qa, production, sprint-active | COMMENT alerts |
+| pull_request (merged to main) | — | PR MERGED TO MAIN |
+
+**Inputs:** `release_approver_username` (for approval/decline), `timezone`, label names.
 
 **Guard:** `if (enable_telegram == true)`; `continue-on-error: true`; skip if secrets missing.
 
@@ -239,14 +296,14 @@ When a consumer trigger runs `uses: org/repo/.github/workflows/release-control.y
 
 | Template | Labels | Key Fields |
 |----------|--------|------------|
-| `delivery-intake.yml` | `intake` | Type, Summary, Description, Priority, Acceptance Criteria |
-| `bug-report.yml` | `intake`, `bug` | Summary, Environment, Steps to Reproduce, Current/Expected Behavior, Priority, Acceptance Criteria |
-| `sprint-planning.yml` | `intake`, `sprint-planning` | Sprint Name, Deliverables (textarea), Target Date |
-| `risk-review.yml` | `intake`, `risk`, `production` | Sprint Ref, QA Rec, Release Notes, Risk Mitigation |
-| `qa-request.yml` | `intake`, `qa` | Feature Ref, Environment, Test Scope, Risk Assessment, QA Rec, **QA Reviewer GitHub Username** |
-| `release-approval.yml` | `intake`, `production`, `risk` | Sprint Ref, QA Rec, Risk Summary, **Release Approver GitHub Username** |
+| `sprint-planning.yml` | `sprint`, `planning`, `sprint-planning` | Sprint Name, Sprint Dates, Sprint Goal, Sprint Features (one per line), Sprint Approved |
+| `task.yml` | `task` | Task Summary, Description, Priority (P0–P3), Status, Acceptance Criteria |
+| `bug-report.yml` | `bug`, `qa` | Platform, Severity, Build, Summary, Steps, Expected/Actual, Environment, Evidence |
+| `qa-request.yml` | `qa-request` | Related Issue, What to Test, Environment+Build, Acceptance Criteria, Artifacts, QA Outcome |
+| `production-release-qa-signoff.yml` | `release`, `production`, `approval` | Sprint Ref, Version, Release Summary, QA Summary, QA Recommendation, Deployment Authorized |
+| `config.yml` | — | Blank issues, contact links |
 
-All approver fields use placeholder hints (`@release-approver`, `@qa-reviewer`); no hardcoded usernames.
+Approvers configured via workflow inputs; no hardcoded usernames.
 
 ---
 
@@ -313,7 +370,7 @@ User creates sprint issue with deliverables
 ### 5.3 Release Approval Flow
 
 ```
-User adds production label (or uses release-approval form)
+User adds production label (or uses production-release-qa-signoff form)
          │
          ▼
 ┌─────────────────────┐
@@ -384,12 +441,17 @@ Labels are applied manually or by issue templates; workflows react to their pres
 | GitHub Event | Consumer Trigger Condition | Workflow Called |
 |--------------|----------------------------|-----------------|
 | `issues.opened` | Always | intake-governance |
+| `issues.opened` | Title "SPRINT -" | sprint-child-creator |
+| `issues.opened` | Labels include production | release-control, notify-release-approver |
 | `issues.edited` | Always | intake-governance |
 | `issues.labeled` | Always | intake-governance |
-| `issues.labeled` | Label = sprint-planning | sprint-orchestration |
+| `issues.labeled` | Label = sprint-planning or planning | sprint-orchestration |
 | `issues.labeled` | Label = production | release-control |
-| `issues.labeled` | Label = production, sprint-planning, or risk | telegram-alerts |
+| `issues.opened/closed/reopened` | Label filter (bug, qa, sprint, production) | telegram-alerts |
+| `issue_comment.created` | Label filter | telegram-alerts |
 | `issues.labeled` | Label = production | whatsapp-alerts |
+| `issues.closed` | — | auto-close-sprint (updates parent sprint burn-down) |
+| `issue_comment.created` | Issue has production label | authorize-deployment |
 | `pull_request.opened` | Always | intake-governance |
 | `pull_request.closed` | merged == true | telegram-alerts, whatsapp-alerts |
 | `pull_request.labeled` | Label = production | release-control |
@@ -410,15 +472,29 @@ Labels are applied manually or by issue templates; workflows react to their pres
 | sprint-orchestration | `issue_number` | (from event) | number |
 | sprint-orchestration | `enable_child_task_creation` | `false` | boolean |
 | sprint-orchestration | `enable_milestone_assignment` | `false` | boolean |
+| sprint-child-creator | `title_prefix` | `SPRINT -` | string |
+| sprint-child-creator | `sprint_label` | `sprint` | string |
+| sprint-child-creator | `intake_label` | `intake` | string |
+| auto-close-sprint | `enable_telegram_alert` | `false` | boolean |
+| notify-release-approver | `release_approver_username` | (required) | string |
+| notify-release-approver | `production_label` | `production` | string |
+| notify-release-approver | `project_name` | — | string |
+| authorize-deployment | `release_approver_username` | (required) | string |
+| authorize-deployment | `qa_approver_username` | (required) | string |
+| authorize-deployment | `production_label` | `production` | string |
+| authorize-deployment | `ready_label` | `ready-for-deploy` | string |
+| authorize-deployment | `declined_label` | `declined` | string |
 | release-control | `release_approver` | `@release-approver` | string |
 | release-control | `default_release_approver` | — | string |
 | release-control | `production_label` | `production` | string |
 | release-control | `enable_alerts` | `false` | boolean |
 | release-control | `enable_telegram` | `false` | boolean |
 | release-control | `enable_whatsapp` | `false` | boolean |
-| telegram-alerts | `production_label` | `production` | string |
-| telegram-alerts | `sprint_planning_label` | `sprint-planning` | string |
-| telegram-alerts | `risk_label` | `risk` | string |
+| telegram-alerts | `bug_label`, `qa_label`, `qa_request_label` | various | string |
+| telegram-alerts | `sprint_label`, `planning_label`, `sprint_planning_label` | various | string |
+| telegram-alerts | `sprint_active_label`, `production_label` | various | string |
+| telegram-alerts | `release_approver_username` | — | string |
+| telegram-alerts | `timezone` | Africa/Nairobi | string |
 | telegram-alerts | `enable_telegram` | `false` | boolean |
 | whatsapp-alerts | `production_label` | `production` | string |
 | whatsapp-alerts | `enable_whatsapp` | `false` | boolean |
@@ -427,8 +503,8 @@ Labels are applied manually or by issue templates; workflows react to their pres
 
 | Secret | Used By |
 |--------|---------|
-| `TELEGRAM_BOT_TOKEN` | telegram-alerts, release-control |
-| `TELEGRAM_CHAT_ID` | telegram-alerts, release-control |
+| `TELEGRAM_BOT_TOKEN` | telegram-alerts, release-control, auto-close-sprint |
+| `TELEGRAM_CHAT_ID` | telegram-alerts, release-control, auto-close-sprint |
 | `WHATSAPP_ACCESS_TOKEN` | whatsapp-alerts, release-control |
 | `WHATSAPP_PHONE_NUMBER_ID` | whatsapp-alerts, release-control |
 | `WHATSAPP_RECIPIENT_NUMBER` | whatsapp-alerts, release-control |

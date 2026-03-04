@@ -1,0 +1,73 @@
+name: Task
+description: Create a structured task with owner, priority, and acceptance criteria
+title: "TASK - "
+labels: ["task"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Task Overview
+        Fill out the details below to create a structured, trackable task.
+
+  - type: input
+    id: title_summary
+    attributes:
+      label: Task Summary
+      description: One-line description of the task
+      placeholder: Implement login validation error handling
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Provide context and details
+      placeholder: Explain what needs to be done and why...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 - Critical
+        - P1 - High
+        - P2 - Medium
+        - P3 - Low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: status
+    attributes:
+      label: Status
+      options:
+        - Backlog
+        - In Progress
+        - Blocked
+        - Ready for Review
+        - Done
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define what 'done' looks like
+      placeholder: |
+        - [ ] Requirement 1
+        - [ ] Requirement 2
+        - [ ] Requirement 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Artifacts / Links (Optional)
+      description: Add PR links, designs, screenshots, docs
+      placeholder: https://figma.com/..., https://github.com/..., etc.

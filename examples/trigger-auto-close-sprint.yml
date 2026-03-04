@@ -1,0 +1,17 @@
+# Copy to .github/workflows/delivery-os-auto-close-sprint.yml
+# Replace your-org with your GitHub org or username
+# Reference @v1 (create tag v1.0.0 first)
+
+name: Enable Delivery OS – Auto Close Sprint
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  call-auto-close-sprint:
+    if: contains(github.event.issue.body || '', 'Parent Sprint')
+    uses: your-org/github-delivery-operating-system/.github/workflows/auto-close-sprint.yml@v1
+    with:
+      enable_telegram_alert: false
+    secrets: inherit

@@ -1,84 +1,84 @@
 name: Bug Report
-description: Report a bug through the Delivery Operating System
-title: "[Bug] "
-labels: ["intake", "bug"]
+description: Report a defect or unexpected behavior
+title: "[BUG] "
+labels:
+  - bug
+  - qa
+
 body:
-  - type: markdown
+  - type: checkboxes
+    id: platform
     attributes:
-      value: |
-        ## Bug Report
-        Use this form to report bugs. Include steps to reproduce and environment details for faster triage.
+      label: Platform(s) Affected
+      description: Select all platforms where this issue occurs
+      options:
+        - label: Android
+        - label: iOS
+        - label: Web
+        - label: Backend / API
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - P0 – Blocker (Crash / Data Loss)
+        - P1 – Critical (Core flow broken)
+        - P2 – Major (Workaround exists)
+        - P3 – Minor (UI / Cosmetic)
+    validations:
+      required: true
 
   - type: input
+    id: build
+    attributes:
+      label: Build / Version
+      placeholder: e.g. 4227, v1.3.0
+    validations:
+      required: true
+
+  - type: textarea
     id: summary
     attributes:
-      label: Summary
-      description: Brief title describing the bug
-      placeholder: e.g., Login fails when 2FA is enabled
-    validations:
-      required: true
-
-  - type: dropdown
-    id: environment
-    attributes:
-      label: Environment
-      description: Where the bug occurs
-      options:
-        - Development
-        - Staging
-        - Production
-        - All
+      label: Bug Summary
+      description: One clear sentence describing the issue
     validations:
       required: true
 
   - type: textarea
-    id: steps_to_reproduce
+    id: steps
     attributes:
       label: Steps to Reproduce
-      description: Numbered steps to reproduce the bug
-      placeholder: |
-        1. Go to...
-        2. Click on...
-        3. Observe...
+      description: Provide clear, numbered steps
     validations:
       required: true
 
   - type: textarea
-    id: current_behavior
+    id: expected
     attributes:
-      label: Current Behavior
-      description: What actually happens
-      placeholder: Describe the incorrect or unexpected behavior
+      label: Expected Result
     validations:
       required: true
 
   - type: textarea
-    id: expected_behavior
+    id: actual
     attributes:
-      label: Expected Behavior
-      description: What should happen
-      placeholder: Describe the correct or expected behavior
+      label: Actual Result
     validations:
       required: true
 
-  - type: dropdown
-    id: priority
+  - type: textarea
+    id: environment
     attributes:
-      label: Priority
-      description: Business impact priority
-      options:
-        - Low
-        - Medium
-        - High
-        - Critical
+      label: Test Environment
+      description: Device, OS, browser, network, etc.
     validations:
       required: true
 
-  - type: input
-    id: acceptance_criteria
+  - type: textarea
+    id: evidence
     attributes:
-      label: Acceptance Criteria
-      description: What "fixed" looks like (testable conditions)
-      placeholder: e.g., User can log in with 2FA enabled; no console errors
-    validations:
-      required: true
+      label: Logs / Screenshots / Videos
+      description: Attach any supporting evidence

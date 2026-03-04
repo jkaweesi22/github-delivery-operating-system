@@ -1,0 +1,114 @@
+# Delivery OS – Authorize Deployment (Dual Approval)
+# Reusable: require two approvers (e.g. release approver + QA lead) before deployment
+name: Delivery OS – Authorize Deployment
+
+on:
+  workflow_call:
+    inputs:
+      release_approver_username:
+        required: true
+        type: string
+        description: "GitHub username of release approver (e.g. aMugabi)"
+      qa_approver_username:
+        required: true
+        type: string
+        description: "GitHub username of QA lead approver (e.g. jkaweesi22)"
+      production_label:
+        required: false
+        type: string
+        default: "production"
+      ready_label:
+        required: false
+        type: string
+        default: "ready-for-deploy"
+      declined_label:
+        required: false
+        type: string
+        default: "declined"
+
+jobs:
+  delivery-os-dual-approval:
+    name: Check dual approval
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Check Dual Approval
+        uses: actions/github-script@v7
+        env:
+          RELEASE_APPROVER: ${{ inputs.release_approver_username }}
+          QA_APPROVER: ${{ inputs.qa_approver_username }}
+          PROD_LABEL: ${{ inputs.production_label }}
+          READY_LABEL: ${{ inputs.ready_label }}
+          DECLINED_LABEL: ${{ inputs.declined_label }}
+        with:
+          script: |
+            const issueNumber = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const releaseApprover = process.env.RELEASE_APPROVER;
+            const qaApprover = process.env.QA_APPROVER;
+            const prodLabel = process.env.PROD_LABEL;
+            const readyLabel = process.env.READY_LABEL;
+            const declinedLabel = process.env.DECLINED_LABEL;
+
+            const { data: issue } = await github.rest.issues.get({
+              owner, repo, issue_number: issueNumber
+            });
+            const hasProduction = (issue.labels || []).some(l => l.name === prodLabel);
+            if (!hasProduction) return;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: issueNumber
+            });
+
+            let releaseApproved = false;
+            let qaApproved = false;
+
+            for (const comment of comments.data) {
+              const body = (comment.body || '').trim().toLowerCase();
+
+              // Release approver decline (overrides everything)
+              if (
+                comment.user.login === releaseApprover &&
+                /(declined|reject|not approved)/i.test(body)
+              ) {
+                try {
+                  await github.rest.issues.addLabels({
+                    owner, repo, issue_number: issueNumber, labels: [declinedLabel]
+                  });
+                } catch (e) {}
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner, repo, issue_number: issueNumber, name: readyLabel
+                  });
+                } catch (e) {}
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: issueNumber,
+                  body: '🔴 **Release Declined**\n\nThis release requires additional fixes before production deployment.'
+                });
+                return;
+              }
+
+              if (comment.user.login === releaseApprover &&
+                  /^(approved|approve|ok|go ahead)/i.test(body)) {
+                releaseApproved = true;
+              }
+
+              if (comment.user.login === qaApprover &&
+                  /(qa approved|approved|qa ok|looks good)/i.test(body)) {
+                qaApproved = true;
+              }
+            }
+
+            if (releaseApproved && qaApproved) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner, repo, issue_number: issueNumber, labels: [readyLabel]
+                });
+              } catch (e) {}
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: issueNumber,
+                body: '🟢🚀 **Deployment Authorized**\n\nDual approval received. This release is cleared for production deployment.'
+              });
+            }

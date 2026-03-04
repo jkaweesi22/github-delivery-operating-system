@@ -1,22 +1,52 @@
 # Delivery OS – Telegram Alerts
-# Reusable: event-driven notifications (PR merged, production/sprint/risk labels)
+# Reusable: Phanerooapp-style event-driven notifications
+# Supports: issues (opened/closed/reopened), issue_comment, pull_request merged
 name: Delivery OS – Telegram Alerts
 
 on:
   workflow_call:
     inputs:
-      production_label:
+      bug_label:
         required: false
         type: string
-        default: "production"
+        default: "bug"
+      qa_label:
+        required: false
+        type: string
+        default: "qa"
+      qa_request_label:
+        required: false
+        type: string
+        default: "qa-request"
+      sprint_label:
+        required: false
+        type: string
+        default: "sprint"
+      planning_label:
+        required: false
+        type: string
+        default: "planning"
+      sprint_active_label:
+        required: false
+        type: string
+        default: "sprint-active"
       sprint_planning_label:
         required: false
         type: string
         default: "sprint-planning"
-      risk_label:
+      production_label:
         required: false
         type: string
-        default: "risk"
+        default: "production"
+      release_approver_username:
+        required: false
+        type: string
+        default: ""
+        description: "Username for approval/decline alerts (e.g. aMugabi)"
+      timezone:
+        required: false
+        type: string
+        default: "Africa/Nairobi"
       enable_telegram:
         required: false
         type: boolean
@@ -34,62 +64,143 @@ jobs:
     if: inputs.enable_telegram == true
     continue-on-error: true
     steps:
-      - name: Determine event type and payload
-        id: event
-        run: |
-          PROD="${{ inputs.production_label }}"
-          SPRINT="${{ inputs.sprint_planning_label }}"
-          RISK="${{ inputs.risk_label }}"
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "event_type=PR Merged" >> $GITHUB_OUTPUT
-            echo "title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
-            echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "actor=${{ github.event.pull_request.merged_by.login }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "issues" ]; then
-            LABEL="${{ github.event.label.name }}"
-            if [ "$LABEL" == "$PROD" ]; then echo "event_type=Production Label Added" >> $GITHUB_OUTPUT
-            elif [ "$LABEL" == "$SPRINT" ]; then echo "event_type=Sprint Created" >> $GITHUB_OUTPUT
-            elif [ "$LABEL" == "$RISK" ]; then echo "event_type=Risk Label Added" >> $GITHUB_OUTPUT
-            else echo "event_type=Issue Labeled" >> $GITHUB_OUTPUT
-            fi
-            echo "title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
-            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
-            echo "actor=${{ github.event.sender.login }}" >> $GITHUB_OUTPUT
-          else
-            echo "event_type=Manual Trigger" >> $GITHUB_OUTPUT
-            echo "title=N/A" >> $GITHUB_OUTPUT
-            echo "number=N/A" >> $GITHUB_OUTPUT
-            echo "actor=${{ github.actor }}" >> $GITHUB_OUTPUT
-          fi
-          echo "repo=${{ github.repository }}" >> $GITHUB_OUTPUT
-
       - name: Build and send Telegram message
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BUG_LABEL: ${{ inputs.bug_label }}
+          QA_LABEL: ${{ inputs.qa_label }}
+          QA_REQUEST_LABEL: ${{ inputs.qa_request_label }}
+          SPRINT_LABEL: ${{ inputs.sprint_label }}
+          PLANNING_LABEL: ${{ inputs.planning_label }}
+          SPRINT_ACTIVE_LABEL: ${{ inputs.sprint_active_label }}
+          SPRINT_PLANNING_LABEL: ${{ inputs.sprint_planning_label }}
+          PROD_LABEL: ${{ inputs.production_label }}
+          APPROVER: ${{ inputs.release_approver_username }}
+          TZ: ${{ inputs.timezone }}
+          ISSUE_LABELS: ${{ github.event_name == 'issues' && join(github.event.issue.labels.*.name || fromJSON('[]'), ',') || '' }}
+          COMMENT_ISSUE_LABELS: ${{ github.event_name == 'issue_comment' && join(github.event.issue.labels.*.name || fromJSON('[]'), ',') || '' }}
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
             echo "::notice::Telegram secrets not configured. Skipping."
             exit 0
           fi
-          EVENT="${{ steps.event.outputs.event_type }}"
-          TITLE="${{ steps.event.outputs.title }}"
-          NUM="${{ steps.event.outputs.number }}"
-          ACTOR="${{ steps.event.outputs.actor }}"
-          REPO="${{ steps.event.outputs.repo }}"
-          if [ "$NUM" == "N/A" ]; then
-            URL="https://github.com/${REPO}"
-          elif [ "${{ github.event_name }}" == "pull_request" ]; then
-            URL="https://github.com/${REPO}/pull/${NUM}"
-          else
-            URL="https://github.com/${REPO}/issues/${NUM}"
-          fi
-          TEXT="📦 *Delivery OS Alert*
 
-          *Event:* ${EVENT}
-          *Repo:* \`${REPO}\`
-          *Title:* ${TITLE}
-          *Triggered by:* @${ACTOR}
-          *Link:* ${URL}"
-          PAYLOAD=$(jq -n --arg text "$TEXT" --arg chat "$TELEGRAM_CHAT_ID" '{chat_id:$chat,text:$text,parse_mode:"Markdown"}')
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -H "Content-Type: application/json" -d "$PAYLOAD" || true
+          EVENT="${{ github.event_name }}"
+          ACTION="${{ github.event.action }}"
+          ACTOR="${{ github.event.actor }}"
+          TIMESTAMP=$(date +"%Y-%m-%d %-I:%M %p %Z")
+          MESSAGE=""
+
+          # ======================================
+          # ISSUES (BUG + QA + SPRINT + RELEASE)
+          # ======================================
+          if [ "$EVENT" = "issues" ]; then
+            TITLE="${{ github.event.issue.title }}"
+            URL="${{ github.event.issue.html_url }}"
+            LABELS="${ISSUE_LABELS}"
+
+            # BUG ISSUES
+            if echo "$LABELS" | grep -q "$BUG_LABEL"; then
+              if [ "$ACTION" = "opened" ]; then
+                MESSAGE="🟢🪲 BUG OPENED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+              elif [ "$ACTION" = "reopened" ]; then
+                MESSAGE="🟡♻️ BUG REOPENED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+              elif [ "$ACTION" = "closed" ]; then
+                MESSAGE="🟣✅ BUG CLOSED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+              fi
+            fi
+
+            # QA REQUEST
+            if echo "$LABELS" | grep -q "$QA_LABEL" || echo "$LABELS" | grep -q "$QA_REQUEST_LABEL"; then
+              if [ -z "$MESSAGE" ]; then
+                if [ "$ACTION" = "opened" ]; then
+                  MESSAGE="🔵🧪 QA REQUEST OPENED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+                elif [ "$ACTION" = "reopened" ]; then
+                  MESSAGE="🟠🔁 QA REQUEST REOPENED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+                elif [ "$ACTION" = "closed" ]; then
+                  MESSAGE="🟢✅ QA REQUEST CLOSED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+                fi
+              fi
+            fi
+
+            # SPRINT PLANNING (sprint+planning or sprint-planning)
+            if echo "$LABELS" | grep -q "$SPRINT_PLANNING_LABEL" || (echo "$LABELS" | grep -q "$SPRINT_LABEL" && echo "$LABELS" | grep -q "$PLANNING_LABEL"); then
+              if [ -z "$MESSAGE" ] && [ "$ACTION" = "opened" ]; then
+                MESSAGE="🟣📋 SPRINT CREATED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+              fi
+            fi
+
+            # SPRINT TASKS (sprint-active)
+            if echo "$LABELS" | grep -q "$SPRINT_ACTIVE_LABEL"; then
+              if [ -z "$MESSAGE" ]; then
+                if [ "$ACTION" = "opened" ]; then
+                  MESSAGE="🟡🛠️ SPRINT TASK CREATED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+                elif [ "$ACTION" = "closed" ]; then
+                  MESSAGE="🟢✅ SPRINT TASK COMPLETED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+                fi
+              fi
+            fi
+
+            # PRODUCTION RELEASE
+            if echo "$LABELS" | grep -q "$PROD_LABEL"; then
+              if [ -z "$MESSAGE" ]; then
+                if [ "$ACTION" = "opened" ]; then
+                  MESSAGE="🚀📦 PRODUCTION RELEASE CREATED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+                elif [ "$ACTION" = "closed" ]; then
+                  MESSAGE="🟣🚀 RELEASE CLOSED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+                fi
+              fi
+            fi
+          fi
+
+          # ======================================
+          # COMMENTS
+          # ======================================
+          if [ "$EVENT" = "issue_comment" ]; then
+            TITLE="${{ github.event.issue.title }}"
+            URL="${{ github.event.issue.html_url }}"
+            COMMENT_BODY="${{ github.event.comment.body }}"
+            COMMENT=$(echo "$COMMENT_BODY" | head -c 300)
+            C_LABELS="${COMMENT_ISSUE_LABELS}"
+
+            # RELEASE APPROVER DECLINE
+            if [ -n "$APPROVER" ] && [ "$ACTOR" = "$APPROVER" ] && echo "$COMMENT_BODY" | grep -iq "declined\|reject\|not approved"; then
+              MESSAGE="🔴🛑 RELEASE DECLINED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+
+            # RELEASE APPROVER APPROVAL
+            elif [ -n "$APPROVER" ] && [ "$ACTOR" = "$APPROVER" ] && echo "$COMMENT_BODY" | grep -iq "^approved"; then
+              MESSAGE="🟢🛡️ RELEASE APPROVED%0A$TITLE%0A$URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+
+            elif echo "$C_LABELS" | grep -q "$BUG_LABEL"; then
+              MESSAGE="💬🪲 BUG COMMENT%0A$TITLE%0A$URL%0A---%0A$COMMENT%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+
+            elif echo "$C_LABELS" | grep -q "$QA_LABEL" || echo "$C_LABELS" | grep -q "$QA_REQUEST_LABEL"; then
+              MESSAGE="💬🧪 QA COMMENT%0A$TITLE%0A$URL%0A---%0A$COMMENT%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+
+            elif echo "$C_LABELS" | grep -q "$PROD_LABEL"; then
+              MESSAGE="💬🚀 RELEASE COMMENT%0A$TITLE%0A$URL%0A---%0A$COMMENT%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+
+            elif echo "$C_LABELS" | grep -q "$SPRINT_ACTIVE_LABEL"; then
+              MESSAGE="💬🛠️ SPRINT TASK COMMENT%0A$TITLE%0A$URL%0A---%0A$COMMENT%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+            fi
+          fi
+
+          # PR MERGED TO MAIN
+          if [ "$EVENT" = "pull_request" ]; then
+            PR_MERGED="${{ github.event.pull_request.merged }}"
+            PR_BASE="${{ github.event.pull_request.base.ref }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_URL="${{ github.event.pull_request.html_url }}"
+
+            if [ "$PR_MERGED" = "true" ] && [ "$PR_BASE" = "main" ]; then
+              MESSAGE="🟢🔀 PR MERGED TO MAIN%0A$PR_TITLE%0A$PR_URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+            fi
+          fi
+
+          # SEND
+          if [ -n "$MESSAGE" ]; then
+            curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              -d chat_id="${TELEGRAM_CHAT_ID}" \
+              -d text="${MESSAGE}"
+          fi

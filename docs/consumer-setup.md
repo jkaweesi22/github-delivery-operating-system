@@ -46,13 +46,18 @@ name: Enable Delivery OS – Release Control
 
 on:
   issues:
-    types: [labeled]
+    types: [opened, labeled]
   pull_request:
     types: [labeled]
 
 jobs:
   call-release-control:
-    if: contains(github.event.label.name, 'production')
+    if: |
+      (github.event_name == 'pull_request' && contains(github.event.label.name, 'production')) ||
+      (github.event_name == 'issues' && (
+        (github.event.action == 'labeled' && github.event.label.name == 'production') ||
+        (github.event.action == 'opened' && contains(join(github.event.issue.labels.*.name, ','), 'production'))
+      ))
     uses: your-org/github-delivery-operating-system/.github/workflows/release-control.yml@v1
     with:
       release_approver: "@release-approver"
@@ -107,6 +112,85 @@ jobs:
       # ... other inputs
 ```
 
+**Alternative – Sprint Child Creator (standalone):** For a simpler flow that creates children immediately when a sprint issue is opened (title "SPRINT -"), use the standalone workflow:
+
+```yaml
+# .github/workflows/delivery-os-sprint-child-creator.yml
+name: Enable Delivery OS – Sprint Child Creator
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  call-sprint-child-creator:
+    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@v1
+    with:
+      title_prefix: "SPRINT -"
+      sprint_label: "sprint"
+      intake_label: "intake"
+    secrets: inherit
+```
+
+#### Notify Release Approver (Optional)
+
+Create `.github/workflows/delivery-os-notify-release-approver.yml` to ping the release approver when a production release issue is opened:
+
+```yaml
+name: Enable Delivery OS – Notify Release Approver
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  call-notify-release-approver:
+    uses: your-org/github-delivery-operating-system/.github/workflows/notify-release-approver.yml@v1
+    with:
+      release_approver_username: "aMugabi"
+      production_label: "production"
+      project_name: "My Project"
+```
+
+#### Authorize Deployment – Dual Approval (Optional)
+
+Create `.github/workflows/delivery-os-authorize-deployment.yml` for dual approval (release approver + QA lead):
+
+```yaml
+name: Enable Delivery OS – Authorize Deployment
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  call-authorize-deployment:
+    uses: your-org/github-delivery-operating-system/.github/workflows/authorize-deployment.yml@v1
+    with:
+      release_approver_username: "aMugabi"
+      qa_approver_username: "jkaweesi22"
+      production_label: "production"
+```
+
+#### Auto Close Sprint (Optional)
+
+Create `.github/workflows/delivery-os-auto-close-sprint.yml` to update burn-down and auto-close when all child tasks complete:
+
+```yaml
+name: Enable Delivery OS – Auto Close Sprint
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  call-auto-close-sprint:
+    uses: your-org/github-delivery-operating-system/.github/workflows/auto-close-sprint.yml@v1
+    with:
+      enable_telegram_alert: false
+    secrets: inherit
+```
+
 #### Intake Governance Trigger
 
 Create `.github/workflows/delivery-os-intake-governance.yml`:
@@ -130,27 +214,37 @@ jobs:
 
 #### Telegram Alerts Trigger
 
-Create `.github/workflows/delivery-os-telegram-alerts.yml`:
+Create `.github/workflows/delivery-os-telegram-alerts.yml` (Phanerooapp-style: issues opened/closed/reopened, comments, PR merged):
 
 ```yaml
 name: Enable Delivery OS – Telegram Alerts
 
 on:
+  issues:
+    types: [opened, closed, reopened]
+  issue_comment:
+    types: [created]
   pull_request:
     types: [closed]
-  issues:
-    types: [labeled]
 
 jobs:
   call-telegram-alerts:
     if: |
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-      (github.event_name == 'issues' && (contains(github.event.label.name, 'production') || contains(github.event.label.name, 'sprint-planning') || contains(github.event.label.name, 'risk')))
+      github.event_name == 'issues' ||
+      github.event_name == 'issue_comment' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     uses: your-org/github-delivery-operating-system/.github/workflows/telegram-alerts.yml@v1
     with:
-      production_label: "production"
+      bug_label: "bug"
+      qa_label: "qa"
+      qa_request_label: "qa-request"
+      sprint_label: "sprint"
+      planning_label: "planning"
       sprint_planning_label: "sprint-planning"
-      risk_label: "risk"
+      sprint_active_label: "sprint-active"
+      production_label: "production"
+      release_approver_username: "aMugabi"
+      timezone: "Africa/Nairobi"
       enable_telegram: true
     secrets: inherit
 ```
@@ -221,6 +315,10 @@ All governance behavior is configurable via workflow inputs:
 | `intake_label` | `intake` | Label applied to new intake items |
 | `enable_child_task_creation` | `false` | Create child issues from sprint deliverable lines |
 | `enable_milestone_assignment` | `false` | Assign parent milestone to child issues |
+| `title_prefix` | `SPRINT -` | Title prefix for sprint-child-creator |
+| `release_approver_username` | (required) | Username for notify-release-approver, authorize-deployment |
+| `qa_approver_username` | (required) | QA lead username for dual approval |
+| `enable_telegram_alert` | `false` | Telegram alert when sprint 100% complete (auto-close-sprint) |
 | `risk_label` | `risk` | Label that triggers risk alerts |
 | `enable_alerts` | `false` | Master switch for release-control alerts |
 | `enable_telegram` | `false` | Enable Telegram notifications |
@@ -244,7 +342,11 @@ with:
 1. **Delete trigger workflow files** from `.github/workflows/`:
    - `delivery-os-release-control.yml`
    - `delivery-os-sprint-orchestration.yml`
+   - `delivery-os-sprint-child-creator.yml`
    - `delivery-os-intake-governance.yml`
+   - `delivery-os-auto-close-sprint.yml`
+   - `delivery-os-notify-release-approver.yml`
+   - `delivery-os-authorize-deployment.yml`
    - `delivery-os-telegram-alerts.yml`
    - `delivery-os-whatsapp-alerts.yml`
 

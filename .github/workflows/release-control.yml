@@ -67,8 +67,8 @@ jobs:
             const sprintMatch = bodyFlat.match(/#\d+/);
             const sprintRef = sprintMatch ? sprintMatch[0] : 'N/A';
 
-            // Parse QA recommendation
-            const qaMatch = bodyFlat.match(/(Approve|Reject|Conditional)/i);
+            // Parse QA recommendation (supports both formats)
+            const qaMatch = bodyFlat.match(/(Approve for Production|Reject Release|Conditional Approval|Approve|Reject|Conditional)/i);
             const qaRec = qaMatch ? qaMatch[0] : 'Not specified';
 
             // Parse Release Approver from issue body (GitHub form: ### Label \n\n value)

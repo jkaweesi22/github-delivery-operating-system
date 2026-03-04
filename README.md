@@ -85,20 +85,18 @@ intake → sprint → qa → production → approved / rejected
 
 Predefined templates for:
 
-* Delivery intake (features / bugs combined)
-* Bug report (dedicated, with steps to reproduce and environment)
-* Sprint planning
-* QA requests
-* Risk review
-* Release approval
+* Sprint planning (features one per line, sprint goal, approval status)
+* Task (owner, priority, status, acceptance criteria)
+* Bug report (platform, severity, steps to reproduce)
+* QA request (related issue, test scope, artifacts)
+* Production release & QA sign-off (sprint reference, version, QA recommendation)
 
 Templates capture:
 
 * Risk classification
 * Acceptance criteria
 * QA recommendation
-* QA reviewer username
-* Release approver username
+* Dual approval (release approver + QA lead) — configurable usernames
 
 No hardcoded users — fully configurable.
 
@@ -106,16 +104,19 @@ No hardcoded users — fully configurable.
 
 ### 4. Sprint Orchestration Engine
 
-* Detects sprint planning issues
-* Optionally generates structured child issues
+* Detects sprint planning issues (title "SPRINT -" or labels)
+* Parses Sprint Features (one per line, no bullets)
+* Optionally generates structured child issues with "Parent Sprint: #N"
 * Prevents duplicate orchestration
 * Supports milestone propagation
 * Posts sprint health summaries
+* Auto-close sprint when 100% complete (with burn-down tracking)
 
 Optional features (disabled by default):
 
 * Child task creation
 * Milestone assignment
+* Auto-close sprint when all children complete
 
 ---
 
@@ -273,8 +274,11 @@ git push origin v1.0.0
 # Run installer into your consumer repo (never overwrites)
 REPO_ORG=jkaweesi22 ./scripts/install.sh /path/to/your-repo
 
-# Optional: include issue templates (Delivery Intake, Bug Report, etc.)
+# Optional: include issue templates
 REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates /path/to/your-repo
+
+# Optional: auto-create labels (requires gh CLI, target must be git repo)
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels /path/to/your-repo
 ```
 
 ### Option B: Manual Copy

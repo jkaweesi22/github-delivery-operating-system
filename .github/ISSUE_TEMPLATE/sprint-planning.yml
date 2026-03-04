@@ -1,41 +1,58 @@
 name: Sprint Planning
-description: Create a new sprint with structured deliverables
-title: "[Sprint] "
-labels: ["intake", "sprint-planning"]
+description: Plan sprint scope; each feature becomes a task issue
+title: "SPRINT - "
+labels: ["sprint", "planning", "sprint-planning"]
+
 body:
   - type: markdown
     attributes:
       value: |
-        ## Sprint Planning
-        Add one deliverable per line. The Delivery OS will create child issues and track progress.
-        **Format:** One item per line (bullet or numbered list accepted)
+        # Sprint Planning
+
+        Enter ONE feature per line.
+        Do not use bullets.
+        Do not number items.
+        Do not combine multiple features on one line.
 
   - type: input
     id: sprint_name
     attributes:
       label: Sprint Name
-      description: Short identifier for this sprint
-      placeholder: e.g., Sprint 12, Q1 Release
-    validations:
-      required: true
-
-  - type: textarea
-    id: deliverables
-    attributes:
-      label: Deliverables
-      description: One deliverable per line. Start each line with - or a number.
-      placeholder: |
-        - Implement user authentication
-        - Add API rate limiting
-        - Refactor payment module
+      placeholder: Sprint 12 - March 1–14
     validations:
       required: true
 
   - type: input
-    id: target_date
+    id: sprint_dates
     attributes:
-      label: Target End Date
-      description: Expected sprint completion date (YYYY-MM-DD)
-      placeholder: e.g., 2025-03-15
+      label: Sprint Dates
+      placeholder: YYYY-MM-DD to YYYY-MM-DD
     validations:
       required: true
+
+  - type: textarea
+    id: sprint_goal
+    attributes:
+      label: Sprint Goal
+    validations:
+      required: true
+
+  - type: textarea
+    id: sprint_features
+    attributes:
+      label: Sprint Features (One Per Line)
+      placeholder: |
+        Implement burn-down chart
+        Add sprint health indicator
+        Prevent duplicate child creation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sprint_approval
+    attributes:
+      label: Sprint Approved
+      options:
+        - Pending
+        - Approved
+        - Rejected

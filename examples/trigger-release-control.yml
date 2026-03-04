@@ -6,13 +6,18 @@ name: Enable Delivery OS – Release Control
 
 on:
   issues:
-    types: [labeled]
+    types: [opened, labeled]
   pull_request:
     types: [labeled]
 
 jobs:
   call-release-control:
-    if: contains(github.event.label.name, 'production')
+    if: |
+      github.event_name == 'pull_request' && contains(github.event.label.name, 'production') ||
+      github.event_name == 'issues' && (
+        github.event.action == 'labeled' && contains(github.event.label.name, 'production') ||
+        github.event.action == 'opened' && contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
+      )
     uses: your-org/github-delivery-operating-system/.github/workflows/release-control.yml@v1
     with:
       release_approver: "@release-approver"

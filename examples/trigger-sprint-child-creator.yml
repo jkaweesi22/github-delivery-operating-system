@@ -1,0 +1,20 @@
+# Copy to .github/workflows/delivery-os-sprint-child-creator.yml
+# Replace your-org with your GitHub org or username
+# Reference @v1 (create tag v1.0.0 first)
+# Creates child issues when a sprint planning issue is opened (title must start with "SPRINT -")
+
+name: Enable Delivery OS – Sprint Child Creator
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  call-sprint-child-creator:
+    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@v1
+    with:
+      title_prefix: "SPRINT -"
+      sprint_label: "sprint"
+      intake_label: "intake"
+      sprint_active_label: "sprint-active"
+    secrets: inherit

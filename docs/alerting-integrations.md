@@ -38,24 +38,38 @@ All credentials use `${{ secrets.* }}`. No tokens are hardcoded.
    - Visit `https://api.telegram.org/bot<TOKEN>/getUpdates` and read the `chat.id` from the response.
 4. Add secrets in the repository: **Settings → Secrets and variables → Actions**.
 
-### Message Format
+### Message Format (Phanerooapp-style)
 
-```
-📦 Delivery OS Alert
+Event-specific emoji messages:
 
-Event: PR Merged
-Repo: owner/repo
-Title: Feature X implementation
-Triggered by: @username
-Link: https://github.com/owner/repo/pull/42
-```
+| Event | Example |
+|-------|---------|
+| Bug opened | 🟢🪲 BUG OPENED |
+| Bug closed | 🟣✅ BUG CLOSED |
+| QA request opened | 🔵🧪 QA REQUEST OPENED |
+| Sprint created | 🟣📋 SPRINT CREATED |
+| Sprint task completed | 🟢✅ SPRINT TASK COMPLETED |
+| Production release created | 🚀📦 PRODUCTION RELEASE CREATED |
+| Release declined | 🔴🛑 RELEASE DECLINED |
+| Release approved | 🟢🛡️ RELEASE APPROVED |
+| PR merged to main | 🟢🔀 PR MERGED TO MAIN |
+| Comments | 💬🪲 BUG COMMENT, 💬🧪 QA COMMENT, etc. |
 
 ### Trigger Events
 
-- PR merged
-- `production` label added
-- `sprint-planning` label added
-- `risk` label added
+- **Issues:** opened, closed, reopened (filtered by labels: bug, qa, qa-request, sprint+planning, sprint-active, production)
+- **Comments:** created (filtered by issue labels; approval/decline when `release_approver_username` set)
+- **Pull requests:** closed (merged to main only)
+
+### Configuration
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `release_approver_username` | — | Username for approval/decline alerts (e.g. aMugabi) |
+| `timezone` | Africa/Nairobi | Timezone for timestamps |
+| `sprint_active_label` | sprint-active | Label for sprint task alerts |
+
+**Additional:** `auto-close-sprint` can send a Telegram alert when a sprint reaches 100% completion (enable via `enable_telegram_alert: true`).
 
 ---
 

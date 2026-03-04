@@ -44,14 +44,19 @@ REPO_ORG=jkaweesi22 ./scripts/install.sh ../YOUR-CONSUMER-REPO
 
 **What this does:**
 
-- Copies all 5 trigger workflows into your consumer repo
+- Copies all trigger workflows into your consumer repo
 - Replaces `your-org` with `jkaweesi22` in each file
 - Installs workflow files automatically
 
-**Optional — include issue templates** (Delivery Intake, Bug Report, Sprint Planning, etc.):
+**Optional flags:**
+- `--with-templates` — include issue templates (Sprint Planning, Task, Bug Report, QA Request, Production Release)
+- `--with-labels` — auto-create labels in consumer repo (requires `gh` CLI and target must be a git repo)
 
 ```bash
 REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates ../YOUR-CONSUMER-REPO
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels ../YOUR-CONSUMER-REPO
+# Or both:
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates --with-labels ../YOUR-CONSUMER-REPO
 ```
 
 If you're using a fork, replace `jkaweesi22` with your fork owner.
@@ -77,10 +82,16 @@ In your consumer repo on GitHub:
 | intake | 0E8A16 |
 | bug | D93F0B |
 | sprint | 1D76DB |
-| qa | FBCA04 |
-| production | D93F0B |
-| risk | B60205 |
+| planning | 5319E7 |
 | sprint-planning | 5319E7 |
+| task | 7057FF |
+| qa | FBCA04 |
+| qa-request | FBCA04 |
+| production | D93F0B |
+| release | B60205 |
+| approval | 0E8A16 |
+| ready-for-deploy | 0E8A16 |
+| risk | B60205 |
 
 Or via terminal (from your consumer repo): `gh label create intake --color 0E8A16` (repeat for each).
 
@@ -114,7 +125,7 @@ In your consumer repo:
 8. Replace `your-org` with `jkaweesi22` in the `uses:` line
 9. Commit the file
 
-Repeat for all 5 triggers: `trigger-intake-governance`, `trigger-sprint-orchestration`, `trigger-release-control`, `trigger-telegram-alerts`, `trigger-whatsapp-alerts`. Create files named `delivery-os-intake-governance.yml`, `delivery-os-sprint-orchestration.yml`, etc.
+Repeat for all triggers: `trigger-intake-governance`, `trigger-sprint-orchestration`, `trigger-sprint-child-creator`, `trigger-release-control`, `trigger-auto-close-sprint`, `trigger-notify-release-approver`, `trigger-authorize-deployment`, `trigger-telegram-alerts`, `trigger-whatsapp-alerts`. Create files named `delivery-os-intake-governance.yml`, `delivery-os-sprint-orchestration.yml`, etc.
 
 #### Step 2: Add Labels
 
@@ -175,7 +186,15 @@ Once installed:
 REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates ../YOUR-CONSUMER-REPO
 ```
 
-Copies all 7 templates: `delivery-intake.yml`, `bug-report.yml`, `sprint-planning.yml`, `risk-review.yml`, `qa-request.yml`, `release-approval.yml`, `config.yml`.
+#### Auto-create labels
+
+Requires `gh` CLI and target must be a git repo with GitHub remote:
+
+```bash
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels ../YOUR-CONSUMER-REPO
+```
+
+Copies all 8 templates: `sprint-planning.yml`, `task.yml`, `bug-report.yml`, `qa-request.yml`, `production-release-qa-signoff.yml`, `config.yml`.
 
 ---
 
@@ -192,12 +211,11 @@ The installer doesn't support picking individual templates. Use manual copy:
 
 | Template | Use for |
 |----------|---------|
-| delivery-intake.yml | Feature requests and bugs (combined form) |
-| bug-report.yml | Bug reports with steps to reproduce |
-| sprint-planning.yml | Sprint creation with deliverables |
-| risk-review.yml | Production release request with QA rec |
-| qa-request.yml | QA review request with QA Reviewer |
-| release-approval.yml | Release approval with Release Approver |
+| sprint-planning.yml | Sprint creation with features (one per line) |
+| task.yml | Structured tasks with owner, priority, acceptance criteria |
+| bug-report.yml | Bug reports with platform, severity, steps to reproduce |
+| qa-request.yml | QA testing request for sprint tasks or bug fixes |
+| production-release-qa-signoff.yml | Production release governance & QA sign-off |
 | config.yml | Blank issues + contact links (optional) |
 
 ---
@@ -225,9 +243,13 @@ rm .github/workflows/delivery-os-whatsapp-alerts.yml
 | Workflow | Trigger file | Purpose |
 |----------|--------------|---------|
 | Intake governance | trigger-intake-governance.yml | Apply intake label, post acknowledgment |
-| Sprint orchestration | trigger-sprint-orchestration.yml | Parse sprint deliverables, optional child issues |
+| Sprint orchestration | trigger-sprint-orchestration.yml | Parse sprint features, optional child issues |
+| Sprint child creator | trigger-sprint-child-creator.yml | Create child issues on sprint open (title "SPRINT -") |
 | Release control | trigger-release-control.yml | Approval gate, QA parsing, approver tagging |
-| Telegram alerts | trigger-telegram-alerts.yml | Notifications (PR merged, production/sprint/risk labels) |
+| Auto close sprint | trigger-auto-close-sprint.yml | Update burn-down, auto-close when 100% complete |
+| Notify release approver | trigger-notify-release-approver.yml | Ping approver when production release opened |
+| Authorize deployment | trigger-authorize-deployment.yml | Dual approval (release approver + QA lead) |
+| Telegram alerts | trigger-telegram-alerts.yml | Notifications (PR merged, production/sprint labels) |
 | WhatsApp alerts | trigger-whatsapp-alerts.yml | Notifications (PR merged, production label) |
 
 ---
@@ -235,27 +257,27 @@ rm .github/workflows/delivery-os-whatsapp-alerts.yml
 ## Prerequisites (For Day-to-Day Use)
 
 - The Delivery OS is installed in your repository (see [Consumer Setup](consumer-setup.md))
-- You have the required labels: `intake`, `bug`, `sprint`, `qa`, `production`, `risk`, `sprint-planning`
+- You have the required labels: `intake`, `bug`, `sprint`, `planning`, `sprint-planning`, `task`, `qa`, `qa-request`, `production`, `release`, `approval`
 - Issue templates are available (copy from this repo's `.github/ISSUE_TEMPLATE/` if needed)
 
 ---
 
-## How to Submit a Feature Request or Bug Report
+## How to Submit a Task or Bug Report
 
-### Option A: Delivery Intake (combined form)
+### Option A: Task (structured form)
 
 1. Go to your repository on GitHub.
 2. Click **Issues** → **New issue**.
-3. Select **Delivery Intake** (or the intake form your repo uses).
+3. Select **Task**.
 4. Fill in the required fields:
-   - **Intake Type:** Feature Request or Bug Report
-   - **Summary:** Short title
-   - **Description:** Detailed description (for bugs: current vs expected behavior, steps to reproduce)
-   - **Priority:** Low, Medium, High, or Critical
-   - **Acceptance Criteria:** Testable conditions for done
+   - **Task Summary:** One-line description
+   - **Description:** Context and details
+   - **Priority:** P0–P3
+   - **Status:** Backlog, In Progress, Blocked, Ready for Review, or Done
+   - **Acceptance Criteria:** What "done" looks like
 5. Click **Submit new issue**.
 
-**What happens:** The issue receives the `intake` label and a governance acknowledgment comment is posted.
+**What happens:** The issue receives the `task` label and a governance acknowledgment comment is posted.
 
 ### Option B: Bug Report (dedicated form)
 
@@ -263,16 +285,16 @@ rm .github/workflows/delivery-os-whatsapp-alerts.yml
 2. Click **Issues** → **New issue**.
 3. Select **Bug Report**.
 4. Fill in the required fields:
-   - **Summary:** Brief title describing the bug
-   - **Environment:** Development, Staging, Production, or All
-   - **Steps to Reproduce:** Numbered steps to reproduce the bug
-   - **Current Behavior:** What actually happens
-   - **Expected Behavior:** What should happen
-   - **Priority:** Low, Medium, High, or Critical
-   - **Acceptance Criteria:** What "fixed" looks like (testable conditions)
+   - **Platform(s) Affected:** Android, iOS, Web, or Backend/API
+   - **Severity:** P0–P3 (Blocker, Critical, Major, Minor)
+   - **Build/Version:** e.g. 4227, v1.3.0
+   - **Bug Summary:** One clear sentence
+   - **Steps to Reproduce:** Numbered steps
+   - **Expected Result** and **Actual Result**
+   - **Test Environment:** Device, OS, browser, etc.
 5. Click **Submit new issue**.
 
-**What happens:** The issue receives the `intake` and `bug` labels and a governance acknowledgment comment is posted.
+**What happens:** The issue receives the `bug` and `qa` labels and a governance acknowledgment comment is posted.
 
 ---
 
@@ -281,57 +303,56 @@ rm .github/workflows/delivery-os-whatsapp-alerts.yml
 1. Go to **Issues** → **New issue**.
 2. Select **Sprint Planning**.
 3. Fill in:
-   - **Sprint Name:** e.g., Sprint 12, Q1 Release
-   - **Deliverables:** One item per line, using `-` or numbers:
+   - **Sprint Name:** e.g., Sprint 12 - March 1–14
+   - **Sprint Dates:** YYYY-MM-DD to YYYY-MM-DD
+   - **Sprint Goal:** What this sprint aims to achieve
+   - **Sprint Features (One Per Line):** One feature per line, no bullets or numbers:
      ```
-     - Implement user authentication
-     - Add API rate limiting
-     - Refactor payment module
+     Implement burn-down chart
+     Add sprint health indicator
+     Prevent duplicate child creation
      ```
-   - **Target End Date:** Expected sprint completion
+   - **Sprint Approved:** Pending, Approved, or Rejected
 4. Click **Submit new issue**.
 
 **What happens:**
 
-- The issue gets `intake` and `sprint-planning` labels.
+- The issue gets `sprint`, `planning`, and `sprint-planning` labels.
 - If **child task creation** is enabled in your trigger workflow, the Delivery OS will:
-  - Parse each deliverable line
-  - Create a child issue for each
+  - Parse each feature line from the Sprint Features section
+  - Create a child issue for each (with "Parent Sprint: #N" link)
   - Post a Sprint Health Summary comment with links to child issues.
-- If child creation is disabled (default), the sprint issue is validated and no child issues are created.
+- If **auto close sprint** is enabled, closing child issues updates burn-down and auto-closes the sprint when 100% complete.
 
 ---
 
-## How to Request Release Approval
+## How to Request Production Release
 
 1. Ensure you have a sprint planning issue (e.g., #12).
 2. Go to **Issues** → **New issue**.
-3. Select **Release Approval**.
+3. Select **Production Release & QA Sign-Off**.
 4. Fill in:
-   - **Sprint Reference:** e.g., `#12`
-   - **QA Recommendation:** Approve, Reject, or Conditional
-   - **Risk Summary:** Risks and mitigations, rollback plan
-   - **Release Approver GitHub Username:** e.g., `@your-release-approver`
+   - **Sprint Reference:** e.g., `#45`
+   - **Version / Build Number:** e.g., v2.4.1
+   - **Release Summary:** What's in this release
+   - **QA Summary + Evidence Links:** Link QA issues, screenshots, logs
+   - **Overall QA Recommendation:** Approve for Production, Reject Release, or Conditional Approval
+   - **Deployment Authorized:** Yes or No
 5. Click **Submit new issue**.
 
-**What happens:** The issue receives `intake`, `production`, and `risk` labels. The Delivery OS posts an approval comment mentioning the Release Approver and asks them to comment `Approved for production` or `Release approved` to sign off.
-
-**Alternative:** Add the `production` label to an existing issue (e.g., from the Risk Review template) that contains sprint reference and QA recommendation. The Release Approver will be taken from your workflow's `default_release_approver` or `release_approver` input, since Risk Review does not include that field.
+**What happens:** The issue receives `release`, `production`, and `approval` labels. The Delivery OS posts an approval comment and (if configured) notifies the release approver. For **dual approval**, both the release approver and QA lead must comment approval before deployment is authorized.
 
 ---
 
 ## How to Approve a Release
 
-If you are the Release Approver:
+**Single approval:** If you are the Release Approver, comment `Approved for production` or `Release approved` on the production release issue.
 
-1. Open the release approval issue or PR with the `production` label.
-2. Review the QA recommendation and risk summary in the approval comment.
-3. Add a comment with one of:
-   - `Approved for production`
-   - `Release approved`
-4. Merge the PR when ready (or close the issue if it was an issue-based release request).
+**Dual approval (Min Allan + QA Lead):** When using `trigger-authorize-deployment.yml`, both approvers must comment:
+- Release approver: `approved`, `approve`, `ok`, or `go ahead`
+- QA lead: `qa approved`, `approved`, `qa ok`, or `looks good`
 
-**Note:** The Delivery OS posts an advisory notice if no approval comment is found. Use branch protection rules to require approvals before merge.
+Once both approve, the issue receives the `ready-for-deploy` label. To decline, the release approver comments `declined`, `reject`, or `not approved`.
 
 ---
 
@@ -391,16 +412,15 @@ By default, sprint orchestration does **not** create child issues. To enable:
 1. Go to **Issues** → **New issue**.
 2. Select **QA Request**.
 3. Fill in:
-   - **Title:** Brief summary
-   - **Feature / Issue Reference:** e.g., `#42`
-   - **Environment:** Development, Staging, Production, or All
-   - **Test Scope:** What to test and how
-   - **Risk Assessment:** Low, Medium, High, or Critical
-   - **QA Recommendation:** Approve, Reject, or Conditional
-   - **QA Reviewer GitHub Username:** e.g., `@qa-reviewer`
+   - **Related Sprint Task Issue (#):** e.g., `#101`
+   - **What to Test:** Test scope and steps
+   - **Environment + Build Link:** Staging build, TestFlight/APK/Web URL
+   - **Acceptance Criteria:** Expected behavior, edge cases
+   - **Artifacts:** Screenshots, Logs, Video Recording, Crash Report
+   - **QA Outcome:** Pending, Pass, or Fail
 4. Click **Submit new issue**.
 
-**What happens:** The issue is tagged for QA with `intake` and `qa` labels. The QA Reviewer is tagged for attention.
+**What happens:** The issue receives the `qa-request` label. If auto-assign is configured, QA team members are assigned.
 
 ---
 
@@ -410,6 +430,9 @@ By default, sprint orchestration does **not** create child issues. To enable:
    - `delivery-os-release-control.yml`
    - `delivery-os-sprint-orchestration.yml`
    - `delivery-os-intake-governance.yml`
+   - `delivery-os-auto-close-sprint.yml`
+   - `delivery-os-notify-release-approver.yml`
+   - `delivery-os-authorize-deployment.yml`
    - `delivery-os-telegram-alerts.yml`
    - `delivery-os-whatsapp-alerts.yml`
 
@@ -426,13 +449,15 @@ The central Delivery OS repository is not modified. You can reinstall later by r
 | Task | Action |
 |------|--------|
 | Install in another repo | Run installer (Option A) or use GitHub UI; add labels |
-| Submit feature | New issue → Delivery Intake |
-| Report bug | New issue → Bug Report (or Delivery Intake) |
+| Submit task | New issue → Task |
+| Report bug | New issue → Bug Report |
 | Create sprint | New issue → Sprint Planning |
-| Request release | New issue → Release Approval (or add `production` to existing) |
-| Approve release | Comment `Approved for production` or `Release approved` |
+| Request release | New issue → Production Release & QA Sign-Off |
+| Approve release | Comment `Approved for production` or use dual approval workflow |
 | Enable alerts | Add secrets + set `enable_telegram` / `enable_whatsapp` in triggers |
 | Enable child tasks | Set `enable_child_task_creation: true` in sprint trigger |
+| Enable auto-close sprint | Install `trigger-auto-close-sprint.yml` |
+| Enable dual approval | Install `trigger-authorize-deployment.yml` and set approver usernames |
 | Uninstall | Delete `delivery-os-*.yml` workflows |
 
 ---

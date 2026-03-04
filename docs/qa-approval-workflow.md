@@ -1,6 +1,6 @@
 # QA & Approval Workflow
 
-Structured QA requests and release approvals with dynamic @username tagging. No hardcoded usernames.
+Structured QA requests and production release approvals with configurable approvers. Supports single approver or dual approval (release approver + QA lead).
 
 ---
 
@@ -8,56 +8,65 @@ Structured QA requests and release approvals with dynamic @username tagging. No 
 
 ### Bug Report (`bug-report.yml`)
 
-Use for structured bug reports with environment and reproduction steps.
+Use for structured bug reports with platform, severity, and reproduction steps.
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| Summary | Yes | Brief title describing the bug |
-| Environment | Yes | Development, Staging, Production, All |
+| Platform(s) Affected | Yes | Android, iOS, Web, Backend/API (checkboxes) |
+| Severity | Yes | P0–P3 (Blocker, Critical, Major, Minor) |
+| Build / Version | Yes | e.g. 4227, v1.3.0 |
+| Bug Summary | Yes | One clear sentence |
 | Steps to Reproduce | Yes | Numbered steps |
-| Current Behavior | Yes | What actually happens |
-| Expected Behavior | Yes | What should happen |
-| Priority | Yes | Low, Medium, High, Critical |
-| Acceptance Criteria | Yes | What "fixed" looks like |
+| Expected Result | Yes | What should happen |
+| Actual Result | Yes | What actually happens |
+| Test Environment | Yes | Device, OS, browser, network |
+| Logs / Screenshots / Videos | No | Supporting evidence |
 
 ### QA Request (`qa-request.yml`)
 
-Use for QA review requests with structured test scope and recommendation.
+Use for QA testing requests for sprint tasks or bug fixes.
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| Title | Yes | Brief summary |
-| Feature / Issue Reference | Yes | Link (e.g., #42) |
-| Environment | Yes | Development, Staging, Production, All |
-| Test Scope | Yes | What to test and how |
-| Risk Assessment | Yes | Low, Medium, High, Critical |
-| QA Recommendation | Yes | Approve, Reject, Conditional |
-| **QA Reviewer GitHub Username** | Yes | Username to tag (e.g., @qa-reviewer) |
-| Artifact / Attachment Notes | No | Describe artifacts to attach |
+| Related Sprint Task Issue (#) | Yes | Link (e.g., #101) |
+| What to Test | Yes | Test scope and steps |
+| Environment + Build Link | No | Staging build, TestFlight/APK/Web URL |
+| Acceptance Criteria | No | Expected behavior, edge cases |
+| Artifacts | No | Screenshots, Logs, Video Recording, Crash Report (checkboxes) |
+| QA Outcome | No | Pending, Pass, Fail |
 
-### Release Approval (`release-approval.yml`)
+### Production Release & QA Sign-Off (`production-release-qa-signoff.yml`)
 
-Use for production release approval with governance fields.
+Use for formal production release governance and QA sign-off.
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| Sprint Reference | Yes | Link (e.g., #12) |
-| QA Recommendation | Yes | Approve, Reject, Conditional |
-| Risk Summary | Yes | Risks and mitigations |
-| **Release Approver GitHub Username** | Yes | Username to tag (e.g., @release-approver) |
+| Sprint Reference | Yes | Link (e.g., #45) |
+| Version / Build Number | Yes | e.g. v2.4.1 |
+| Release Summary | Yes | What's in this release |
+| QA Summary + Evidence Links | No | Link QA issues, screenshots, logs |
+| Overall QA Recommendation | No | Approve for Production, Reject Release, Conditional Approval |
+| Deployment Authorized | No | Yes or No |
 
 ---
 
-## Dynamic Tagging in Workflows
+## Release Approval Flow
 
-When the `production` label is applied (e.g., from release-approval or risk-review), the release-control workflow:
+When the `production` label is applied (e.g., from production-release-qa-signoff), the release-control workflow:
 
-1. Parses the issue body for "Release Approver GitHub Username"
-2. Extracts the value (supports `@username` or `username`)
-3. Mentions that username in the approval comment
-4. Falls back to `default_release_approver` (workflow input) if not found
-5. Falls back to `release_approver` (legacy input) if still not found
-6. If none: posts a comment requesting approver assignment
+1. Parses the issue body for sprint reference and QA recommendation
+2. Resolves approver from `default_release_approver` or `release_approver` workflow input
+3. Posts approval comment with @mention
+4. If none configured: posts comment requesting approver assignment
+
+### Dual Approval (Optional)
+
+Use `trigger-authorize-deployment.yml` for dual approval:
+
+- **Release approver** (e.g., aMugabi): Must comment `approved`, `approve`, `ok`, or `go ahead`
+- **QA lead** (e.g., jkaweesi22): Must comment `qa approved`, `approved`, `qa ok`, or `looks good`
+
+Both must approve before `ready-for-deploy` label is applied. Release approver can decline with `declined`, `reject`, or `not approved`.
 
 ### Comment Format (with approver)
 
@@ -69,8 +78,8 @@ When the `production` label is applied (e.g., from release-approval or risk-revi
 | Field | Value |
 |-------|-------|
 | Event | Issue |
-| Sprint | #12 |
-| QA Recommendation | Approve |
+| Sprint | #45 |
+| QA Recommendation | Approve for Production |
 | Repository | owner/repo |
 
 Please review the QA recommendation and comment `Approved for production` or `Release approved` to sign off.
@@ -78,24 +87,29 @@ Please review the QA recommendation and comment `Approved for production` or `Re
 
 ---
 
-## Configuring Default Approvers
+## Configuring Approvers
 
 In your trigger workflow:
 
 ```yaml
 with:
   release_approver: "@release-approver"      # Legacy fallback
-  default_release_approver: "@my-team/ops"   # When issue omits Release Approver
+  default_release_approver: "@my-team/ops"   # When issue omits approver
 ```
 
-Use `default_release_approver` when your team has a designated approver but issues may not always include it.
+For dual approval (`authorize-deployment`):
+
+```yaml
+with:
+  release_approver_username: "aMugabi"
+  qa_approver_username: "jkaweesi22"
+```
 
 ---
 
 ## Template Adoption
 
 - Templates live in the **central repository** only
-- **Optional** — copy `.github/ISSUE_TEMPLATE/` into consumer repos manually
+- **Optional** — copy `.github/ISSUE_TEMPLATE/` into consumer repos via `--with-templates`
 - **Non-destructive** — installer never overwrites existing consumer templates
-- **Safe** — placeholders only; no personal usernames hardcoded
-- Usable in any public or private repository
+- **Safe** — no personal usernames hardcoded; configurable per consumer

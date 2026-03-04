@@ -8,12 +8,14 @@ REPO_ORG="${REPO_ORG:-your-org}"
 REPO_NAME="${REPO_NAME:-github-delivery-operating-system}"
 VERSION="${VERSION:-v1}"
 
-# Parse args: [--with-templates] [target_dir]
+# Parse args: [--with-templates] [--with-labels] [target_dir]
 TARGET_DIR="."
 WITH_TEMPLATES=false
+WITH_LABELS=false
 while [ $# -gt 0 ]; do
   case "$1" in
     --with-templates) WITH_TEMPLATES=true; shift ;;
+    --with-labels) WITH_LABELS=true; shift ;;
     *) TARGET_DIR="$1"; shift ;;
   esac
 done
@@ -66,7 +68,44 @@ for example in "$EXAMPLES_DIR"/trigger-*.yml; do
   COPIED=$((COPIED + 1))
 done
 
-# 6. Optionally copy issue templates (skip existing files)
+# 6. Optionally create labels in consumer repo (requires gh CLI + git repo)
+LABELS_CREATED=0
+if [ "$WITH_LABELS" = true ]; then
+  if ! command -v gh &>/dev/null; then
+    echo "  Skipped labels: gh CLI not installed. Install from https://cli.github.com/"
+  elif [ ! -d "${TARGET_DIR}/.git" ]; then
+    echo "  Skipped labels: ${TARGET_DIR} is not a git repository."
+  else
+    LABELS=(
+      "intake:0E8A16"
+      "bug:D93F0B"
+      "sprint:1D76DB"
+      "sprint-active:1D76DB"
+      "planning:5319E7"
+      "sprint-planning:5319E7"
+      "task:7057FF"
+      "qa:FBCA04"
+      "qa-request:FBCA04"
+      "production:D93F0B"
+      "release:B60205"
+      "approval:0E8A16"
+      "ready-for-deploy:0E8A16"
+      "risk:B60205"
+    )
+    for entry in "${LABELS[@]}"; do
+      name="${entry%%:*}"
+      color="${entry##*:}"
+      if (cd "$TARGET_DIR" && gh label create "$name" --color "$color" 2>/dev/null); then
+        echo "  Created label: $name"
+        LABELS_CREATED=$((LABELS_CREATED + 1))
+      else
+        echo "  Skipped (exists): $name"
+      fi
+    done
+  fi
+fi
+
+# 7. Optionally copy issue templates (skip existing files)
 TEMPLATES_COPIED=0
 if [ "$WITH_TEMPLATES" = true ]; then
   TEMPLATES_SRC="$(dirname "$0")/../.github/ISSUE_TEMPLATE"
@@ -91,20 +130,30 @@ echo ""
 if [ $COPIED -gt 0 ]; then
   echo "Installed ${COPIED} trigger workflow(s)."
   [ $TEMPLATES_COPIED -gt 0 ] && echo "Copied ${TEMPLATES_COPIED} issue template(s)."
+  [ $LABELS_CREATED -gt 0 ] && echo "Created ${LABELS_CREATED} label(s)."
   echo ""
   echo "Next steps:"
   echo "  1. Create release tag in Delivery OS repo: git tag v1.0.0 && git push origin v1.0.0"
-  echo "  2. Add labels in consumer repo:"
-  echo "     gh label create intake --color 0E8A16"
-  echo "     gh label create bug --color D93F0B"
-  echo "     gh label create sprint --color 1D76DB"
-  echo "     gh label create qa --color FBCA04"
-  echo "     gh label create production --color D93F0B"
-  echo "     gh label create risk --color B60205"
-  echo "     gh label create sprint-planning --color 5319E7"
+  if [ $LABELS_CREATED -eq 0 ]; then
+    echo "  2. Add labels in consumer repo (or re-run with --with-labels):"
+    echo "     gh label create intake --color 0E8A16"
+    echo "     gh label create bug --color D93F0B"
+    echo "     gh label create sprint --color 1D76DB"
+    echo "     gh label create sprint-active --color 1D76DB"
+    echo "     gh label create planning --color 5319E7"
+    echo "     gh label create sprint-planning --color 5319E7"
+    echo "     gh label create task --color 7057FF"
+    echo "     gh label create qa --color FBCA04"
+    echo "     gh label create qa-request --color FBCA04"
+    echo "     gh label create production --color D93F0B"
+    echo "     gh label create release --color B60205"
+    echo "     gh label create approval --color 0E8A16"
+    echo "     gh label create ready-for-deploy --color 0E8A16"
+    echo "     gh label create risk --color B60205"
+  fi
   echo "  3. Add secrets (optional, for alerts): gh secret set TELEGRAM_BOT_TOKEN"
   if [ "$WITH_TEMPLATES" = false ]; then
-    echo "  4. Copy issue templates (optional): re-run with --with-templates, or run:"
+    echo "  4. Copy templates (optional): re-run with --with-templates, or run:"
     echo "     mkdir -p ${TARGET_DIR}/.github/ISSUE_TEMPLATE"
     echo "     cp .github/ISSUE_TEMPLATE/*.yml ${TARGET_DIR}/.github/ISSUE_TEMPLATE/"
   fi

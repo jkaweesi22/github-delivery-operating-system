@@ -70,19 +70,20 @@ jobs:
       - name: Validate sprint planning issue
         run: |
           BODY="${{ steps.fetch.outputs.body }}"
+          TITLE="${{ steps.fetch.outputs.title }}"
           LABELS="${{ steps.fetch.outputs.labels }}"
           PLANNING_LABEL="${{ inputs.sprint_planning_label }}"
           ENABLE_CHILD="${{ inputs.enable_child_task_creation }}"
           if [ "${{ github.event_name }}" == "issues" ]; then
             ADDED_LABEL="${{ github.event.label.name }}"
             if [ "${{ github.event.action }}" == "labeled" ]; then
-              if [ "$ADDED_LABEL" != "$PLANNING_LABEL" ]; then
-                echo "::notice::Label added was '$ADDED_LABEL', not '$PLANNING_LABEL'. Skipping."
+              if [ "$ADDED_LABEL" != "$PLANNING_LABEL" ] && ! echo "$LABELS" | grep -q "planning"; then
+                echo "::notice::Label added was '$ADDED_LABEL'. Skipping."
                 exit 0
               fi
             else
-              if ! echo "$LABELS" | grep -q "$PLANNING_LABEL"; then
-                echo "::notice::Issue is not labeled '$PLANNING_LABEL'. Add the label to trigger orchestration."
+              if ! echo "$LABELS" | grep -q "$PLANNING_LABEL" && ! echo "$LABELS" | grep -q "planning" && ! echo "$TITLE" | grep -q "SPRINT -"; then
+                echo "::notice::Issue is not a sprint planning issue. Add sprint-planning/planning label or use 'SPRINT -' title prefix."
                 exit 0
               fi
             fi
@@ -122,12 +123,27 @@ jobs:
           SPRINT_LABEL: ${{ inputs.sprint_label }}
         with:
           script: |
-            const lines = (process.env.SPRINT_BODY || '').split('\n').filter(Boolean);
-            const listLike = /^[-*]\s+.+|^\d+\.\s+.+/;
-            const entries = lines
-              .filter(l => listLike.test(l.trim()))
-              .map(l => l.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '').trim())
-              .filter(l => l.length > 2 && !l.startsWith('#') && !l.startsWith('---'));
+            const body = process.env.SPRINT_BODY || '';
+            let entries = [];
+
+            // Format 1: Sprint Features section (one per line, no bullets) - Phanerooapp style
+            const featuresMatch = body.match(/### Sprint Features[^\n]*\n+([\s\S]*?)(?=###|$)/i);
+            if (featuresMatch) {
+              entries = featuresMatch[1].split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length > 2 && !l.startsWith('#') && !l.startsWith('---'));
+            }
+
+            // Format 2: Deliverables with bullets/numbers - legacy
+            if (entries.length === 0) {
+              const lines = body.split('\n').filter(Boolean);
+              const listLike = /^[-*]\s+.+|^\d+\.\s+.+/;
+              entries = lines
+                .filter(l => listLike.test(l.trim()))
+                .map(l => l.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '').trim())
+                .filter(l => l.length > 2 && !l.startsWith('#') && !l.startsWith('---'));
+            }
+
             const unique = [...new Set(entries)];
             const created = [];
             const parent = `#${process.env.SPRINT_NUMBER}`;
@@ -140,7 +156,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: entry,
-                body: `Sprint item from ${process.env.SPRINT_TITLE}\n\n**Parent:** ${parent}\n\n---\n*Created by Delivery OS Sprint Orchestration*`,
+                body: `Parent Sprint: ${parent}\n\n---\n*Created by Delivery OS Sprint Orchestration*`,
                 labels: [intakeLabel, sprintLabel]
               });
               if (milestone) {
