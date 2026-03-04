@@ -76,32 +76,43 @@ if [ "$WITH_LABELS" = true ]; then
   elif [ ! -d "${TARGET_DIR}/.git" ]; then
     echo "  Skipped labels: ${TARGET_DIR} is not a git repository."
   else
-    LABELS=(
-      "intake:0E8A16"
-      "bug:D93F0B"
-      "sprint:1D76DB"
-      "sprint-active:1D76DB"
-      "planning:5319E7"
-      "sprint-planning:5319E7"
-      "task:7057FF"
-      "qa:FBCA04"
-      "qa-request:FBCA04"
-      "production:D93F0B"
-      "release:B60205"
-      "approval:0E8A16"
-      "ready-for-deploy:0E8A16"
-      "risk:B60205"
-    )
-    for entry in "${LABELS[@]}"; do
-      name="${entry%%:*}"
-      color="${entry##*:}"
-      if (cd "$TARGET_DIR" && gh label create "$name" --color "$color" 2>/dev/null); then
-        echo "  Created label: $name"
-        LABELS_CREATED=$((LABELS_CREATED + 1))
-      else
-        echo "  Skipped (exists): $name"
-      fi
-    done
+    # Resolve to absolute path so cd works reliably
+    TARGET_ABS="$(cd "$TARGET_DIR" && pwd)"
+    if ! (cd "$TARGET_ABS" && gh auth status &>/dev/null); then
+      echo "  Skipped labels: gh CLI not authenticated. Run: gh auth login"
+    elif ! (cd "$TARGET_ABS" && gh repo view &>/dev/null); then
+      echo "  Skipped labels: Target repo not accessible. Ensure it has a GitHub remote and you have push access."
+    else
+      LABELS=(
+        "intake:0E8A16"
+        "bug:D93F0B"
+        "sprint:1D76DB"
+        "sprint-active:1D76DB"
+        "planning:5319E7"
+        "sprint-planning:5319E7"
+        "task:7057FF"
+        "qa:FBCA04"
+        "qa-request:FBCA04"
+        "production:D93F0B"
+        "release:B60205"
+        "approval:0E8A16"
+        "ready-for-deploy:0E8A16"
+        "risk:B60205"
+      )
+      for entry in "${LABELS[@]}"; do
+        name="${entry%%:*}"
+        color="${entry##*:}"
+        err=$(cd "$TARGET_ABS" && gh label create "$name" --color "$color" 2>&1)
+        if [ $? -eq 0 ]; then
+          echo "  Created label: $name"
+          LABELS_CREATED=$((LABELS_CREATED + 1))
+        elif echo "$err" | grep -qi "already exists"; then
+          echo "  Skipped (exists): $name"
+        else
+          echo "  Failed to create label '$name': $err"
+        fi
+      done
+    fi
   fi
 fi
 
