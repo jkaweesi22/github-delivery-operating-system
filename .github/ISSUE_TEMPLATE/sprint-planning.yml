@@ -31,10 +31,11 @@ body:
     validations:
       required: true
 
-  - type: datepicker
+  - type: input
     id: target_date
     attributes:
       label: Target End Date
-      description: Expected sprint completion date
+      description: Expected sprint completion date (YYYY-MM-DD)
+      placeholder: e.g., 2025-03-15
     validations:
       required: true
