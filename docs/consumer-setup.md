@@ -281,17 +281,14 @@ jobs:
 
 Governance workflows apply labels to issues. Create these labels in your consumer repo before use.
 
-**Option 1 — Installer with `--with-labels`** (requires `gh` CLI, repo on GitHub):
+**Option 1 — Setup Labels workflow** (recommended, no token needed):
+
+The installer copies `setup-labels.yml` to your repo. Push, then go to **Actions → Setup Labels → Run workflow**.
+
+**Option 2 — Installer with `--with-labels`** (requires `gh` CLI, repo on GitHub):
 
 ```bash
 REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels /path/to/consumer-repo
-```
-
-**Option 2 — Standalone script** (when installer skips labels):
-
-```bash
-cd /path/to/consumer-repo
-bash /path/to/github-delivery-operating-system/scripts/create-labels.sh
 ```
 
 **Option 3 — Manual** (GitHub UI or `gh label create`):
@@ -378,7 +375,7 @@ with:
 
 ## Safe Removal (Uninstalling Delivery OS)
 
-1. **Delete trigger workflow files** from `.github/workflows/`:
+1. **Delete workflow files** from `.github/workflows/`:
    - `delivery-os-release-control.yml`
    - `delivery-os-sprint-orchestration.yml`
    - `delivery-os-sprint-child-creator.yml`
@@ -388,6 +385,7 @@ with:
    - `delivery-os-authorize-deployment.yml`
    - `delivery-os-telegram-alerts.yml`
    - `delivery-os-whatsapp-alerts.yml`
+   - `setup-labels.yml`
 
 2. **Remove secrets** (optional): If you added Delivery OS–specific secrets, remove them from Settings → Secrets.
 

@@ -1,0 +1,56 @@
+# Copy to .github/workflows/setup-labels.yml in your consumer repo.
+# Run once: Actions → Setup Labels → Run workflow
+# Uses built-in GITHUB_TOKEN — no personal token or gh CLI needed.
+
+name: Setup Labels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Create labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'intake', color: '0E8A16' },
+              { name: 'bug', color: 'D93F0B' },
+              { name: 'sprint', color: '1D76DB' },
+              { name: 'sprint-active', color: '1D76DB' },
+              { name: 'planning', color: '5319E7' },
+              { name: 'sprint-planning', color: '5319E7' },
+              { name: 'task', color: '7057FF' },
+              { name: 'qa', color: 'FBCA04' },
+              { name: 'qa-request', color: 'FBCA04' },
+              { name: 'production', color: 'D93F0B' },
+              { name: 'release', color: 'B60205' },
+              { name: 'approval', color: '0E8A16' },
+              { name: 'ready-for-deploy', color: '0E8A16' },
+              { name: 'risk', color: 'B60205' },
+            ];
+            let created = 0;
+            for (const { name, color } of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                  color,
+                });
+                console.log(`Created: ${name}`);
+                created++;
+              } catch (e) {
+                if (e.message?.includes('already exists')) {
+                  console.log(`Exists: ${name}`);
+                } else {
+                  console.log(`Failed: ${name} - ${e.message}`);
+                }
+              }
+            }
+            console.log(`\nCreated ${created} label(s).`);

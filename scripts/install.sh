@@ -56,7 +56,17 @@ for example in "$EXAMPLES_DIR"/trigger-*.yml; do
   fi
 done
 
-# 5. Copy each example (non-destructive; we've confirmed no conflicts)
+# 5. Copy setup-labels workflow (creates labels via Actions — no gh/token needed)
+SETUP_LABELS="$EXAMPLES_DIR/setup-labels.yml"
+if [ -f "$SETUP_LABELS" ]; then
+  target_setup="${TARGET_DIR}/.github/workflows/setup-labels.yml"
+  if [ ! -f "$target_setup" ]; then
+    cp "$SETUP_LABELS" "$target_setup"
+    echo "  Created: setup-labels.yml (run from Actions tab to create labels)"
+  fi
+fi
+
+# 6. Copy each trigger example (non-destructive; we've confirmed no conflicts)
 COPIED=0
 for example in "$EXAMPLES_DIR"/trigger-*.yml; do
   [ -f "$example" ] || continue
@@ -68,7 +78,7 @@ for example in "$EXAMPLES_DIR"/trigger-*.yml; do
   COPIED=$((COPIED + 1))
 done
 
-# 6. Optionally create labels in consumer repo (requires gh CLI + git repo)
+# 7. Optionally create labels in consumer repo (requires gh CLI + git repo)
 LABELS_CREATED=0
 LABELS_SKIP_REASON=""
 if [ "$WITH_LABELS" = true ]; then
@@ -121,7 +131,7 @@ if [ "$WITH_LABELS" = true ]; then
   fi
 fi
 
-# 7. Optionally copy issue templates (skip existing files)
+# 8. Optionally copy issue templates (skip existing files)
 TEMPLATES_COPIED=0
 if [ "$WITH_TEMPLATES" = true ]; then
   TEMPLATES_SRC="$(dirname "$0")/../.github/ISSUE_TEMPLATE"
@@ -152,9 +162,7 @@ if [ $COPIED -gt 0 ]; then
   echo "  1. (Optional) Pin to a release tag: git tag v1.0.0 && git push origin v1.0.0, then set VERSION=v1.0.0"
   if [ $LABELS_CREATED -eq 0 ]; then
     [ -n "$LABELS_SKIP_REASON" ] && echo "  2. Labels skipped: $LABELS_SKIP_REASON"
-    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    TARGET_ABS="$(cd "$TARGET_DIR" && pwd)"
-    echo "     Create labels: cd $TARGET_ABS && bash $SCRIPT_DIR/create-labels.sh"
+    echo "     Create labels: Actions → Setup Labels → Run workflow (no token needed)"
     echo "     Or manually: gh label create intake --color 0E8A16"
     echo "     gh label create bug --color D93F0B"
     echo "     gh label create sprint --color 1D76DB"

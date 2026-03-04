@@ -321,7 +321,7 @@ Approvers configured via workflow inputs; no hardcoded usernames.
 
 **Non-destructive:** Never overwrites; exits with error on conflict.
 
-**Label creation fallback:** If `--with-labels` skips (e.g. `gh` not authenticated), use `scripts/create-labels.sh` from the consumer repo.
+**Label creation fallback:** If `--with-labels` skips, use **Actions → Setup Labels → Run workflow** (no token needed).
 
 ---
 

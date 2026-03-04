@@ -268,7 +268,7 @@ cd github-delivery-operating-system
 REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates --with-labels /path/to/your-repo
 ```
 
-Add `--with-templates` and/or `--with-labels` as needed. If labels are skipped, run `scripts/create-labels.sh` from your consumer repo.
+Add `--with-templates` and/or `--with-labels` as needed. For labels: **Actions → Setup Labels → Run workflow** (no token needed).
 
 ### Option B: Manual Copy
 

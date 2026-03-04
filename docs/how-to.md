@@ -72,7 +72,9 @@ git push
 
 #### Step 4: Add Required Labels
 
-In your consumer repo on GitHub:
+**Easiest:** Go to **Actions** → **Setup Labels** → **Run workflow** (no token or gh needed).
+
+**Or manually** in your consumer repo on GitHub:
 
 1. Go to **Issues** → **Labels** → **New label**
 2. Create these labels:
@@ -93,18 +95,7 @@ In your consumer repo on GitHub:
 | ready-for-deploy | 0E8A16 |
 | risk | B60205 |
 
-Or via terminal (from your consumer repo):
-
-```bash
-# Option 1: Use the create-labels script (recommended)
-cd /path/to/your-consumer-repo
-bash /path/to/github-delivery-operating-system/scripts/create-labels.sh
-
-# Option 2: Manual commands
-gh label create intake --color 0E8A16
-gh label create bug --color D93F0B
-# ... (repeat for each label — see install.sh or create-labels.sh for full list)
-```
+Or via terminal (from your consumer repo): **Actions → Setup Labels → Run workflow**, or `gh label create intake --color 0E8A16` (repeat for each — see table above).
 
 #### Step 5: Ensure a Tag Exists in Delivery OS Repo
 
@@ -136,11 +127,11 @@ In your consumer repo:
 8. Replace `your-org` with `jkaweesi22` in the `uses:` line
 9. Commit the file
 
-Repeat for all triggers: `trigger-intake-governance`, `trigger-sprint-orchestration`, `trigger-sprint-child-creator`, `trigger-release-control`, `trigger-auto-close-sprint`, `trigger-notify-release-approver`, `trigger-authorize-deployment`, `trigger-telegram-alerts`, `trigger-whatsapp-alerts`. Create files named `delivery-os-intake-governance.yml`, `delivery-os-sprint-orchestration.yml`, etc.
+Repeat for all triggers plus `setup-labels.yml` (for label creation). Create files: `delivery-os-intake-governance.yml`, `delivery-os-sprint-orchestration.yml`, etc., and `setup-labels.yml`.
 
 #### Step 2: Add Labels
 
-Same as Option A, Step 4 — create labels via **Issues** → **Labels**, or run `scripts/create-labels.sh` from your consumer repo.
+Same as Option A, Step 4 — **Actions → Setup Labels → Run workflow**, or create via **Issues** → **Labels**.
 
 #### Step 3: Ensure Tag Exists
 
@@ -153,9 +144,9 @@ Create `v1.0.0` release in the Delivery OS repo if it doesn't exist.
 If you prefer to copy files yourself:
 
 1. Create `.github/workflows/` in your consumer repo
-2. Copy each `examples/trigger-*.yml` → `.github/workflows/delivery-os-*.yml`
-3. In each file, replace `your-org` with `jkaweesi22`
-4. Add labels: run `scripts/create-labels.sh` from consumer repo, or create manually (see Option A, Step 4)
+2. Copy `examples/trigger-*.yml` → `delivery-os-*.yml` and `examples/setup-labels.yml` → `setup-labels.yml`
+3. In each trigger file, replace `your-org` with `jkaweesi22`
+4. Add labels: **Actions → Setup Labels → Run workflow**, or create manually (see Option A, Step 4)
 
 ---
 
@@ -205,12 +196,7 @@ Requires `gh` CLI and target must be a git repo with GitHub remote:
 REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels ../YOUR-CONSUMER-REPO
 ```
 
-If labels are skipped (e.g. `gh` not authenticated or repo not on GitHub), run the standalone script from your consumer repo:
-
-```bash
-cd ../YOUR-CONSUMER-REPO
-bash /path/to/github-delivery-operating-system/scripts/create-labels.sh
-```
+If labels are skipped, use **Actions → Setup Labels → Run workflow** (no token needed).
 
 ---
 
@@ -451,6 +437,7 @@ By default, sprint orchestration does **not** create child issues. To enable:
    - `delivery-os-authorize-deployment.yml`
    - `delivery-os-telegram-alerts.yml`
    - `delivery-os-whatsapp-alerts.yml`
+   - `setup-labels.yml`
 
 2. **Remove secrets** (optional): Settings → Secrets and variables → Actions. Remove `TELEGRAM_*`, `WHATSAPP_*`, `TWILIO_*` if you added them.
 
@@ -474,7 +461,7 @@ The central Delivery OS repository is not modified. You can reinstall later by r
 | Enable child tasks | Set `enable_child_task_creation: true` in sprint trigger |
 | Enable auto-close sprint | Install `trigger-auto-close-sprint.yml` |
 | Enable dual approval | Install `trigger-authorize-deployment.yml` and set approver usernames |
-| Uninstall | Delete `delivery-os-*.yml` workflows |
+| Uninstall | Delete `delivery-os-*.yml` and `setup-labels.yml` workflows |
 
 ---
 
