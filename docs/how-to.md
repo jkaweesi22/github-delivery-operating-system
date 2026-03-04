@@ -93,7 +93,18 @@ In your consumer repo on GitHub:
 | ready-for-deploy | 0E8A16 |
 | risk | B60205 |
 
-Or via terminal (from your consumer repo): `gh label create intake --color 0E8A16` (repeat for each).
+Or via terminal (from your consumer repo):
+
+```bash
+# Option 1: Use the create-labels script (recommended)
+cd /path/to/your-consumer-repo
+bash /path/to/github-delivery-operating-system/scripts/create-labels.sh
+
+# Option 2: Manual commands
+gh label create intake --color 0E8A16
+gh label create bug --color D93F0B
+# ... (repeat for each label — see install.sh or create-labels.sh for full list)
+```
 
 #### Step 5: Ensure a Tag Exists in Delivery OS Repo
 
@@ -129,7 +140,7 @@ Repeat for all triggers: `trigger-intake-governance`, `trigger-sprint-orchestrat
 
 #### Step 2: Add Labels
 
-Same as Option A, Step 4 — create all 7 labels via **Issues** → **Labels**.
+Same as Option A, Step 4 — create labels via **Issues** → **Labels**, or run `scripts/create-labels.sh` from your consumer repo.
 
 #### Step 3: Ensure Tag Exists
 
@@ -144,7 +155,7 @@ If you prefer to copy files yourself:
 1. Create `.github/workflows/` in your consumer repo
 2. Copy each `examples/trigger-*.yml` → `.github/workflows/delivery-os-*.yml`
 3. In each file, replace `your-org` with `jkaweesi22`
-4. Add labels (same as Option A, Step 4)
+4. Add labels: run `scripts/create-labels.sh` from consumer repo, or create manually (see Option A, Step 4)
 
 ---
 
@@ -194,7 +205,12 @@ Requires `gh` CLI and target must be a git repo with GitHub remote:
 REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels ../YOUR-CONSUMER-REPO
 ```
 
-Copies all 8 templates: `sprint-planning.yml`, `task.yml`, `bug-report.yml`, `qa-request.yml`, `production-release-qa-signoff.yml`, `config.yml`.
+If labels are skipped (e.g. `gh` not authenticated or repo not on GitHub), run the standalone script from your consumer repo:
+
+```bash
+cd ../YOUR-CONSUMER-REPO
+bash /path/to/github-delivery-operating-system/scripts/create-labels.sh
+```
 
 ---
 

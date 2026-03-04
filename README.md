@@ -262,19 +262,13 @@ Reusable workflows execute in the consumer repository context with no disruption
 ### Option A: Safe Installer
 
 ```bash
-# Clone this repository
 gh repo clone https://github.com/jkaweesi22/github-delivery-operating-system
 cd github-delivery-operating-system
 
-# Run installer into your consumer repo (never overwrites)
-REPO_ORG=jkaweesi22 ./scripts/install.sh /path/to/your-repo
-
-# Optional: include issue templates
-REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates /path/to/your-repo
-
-# Optional: auto-create labels (requires gh CLI, target must be git repo)
-REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels /path/to/your-repo
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-templates --with-labels /path/to/your-repo
 ```
+
+Add `--with-templates` and/or `--with-labels` as needed. If labels are skipped, run `scripts/create-labels.sh` from your consumer repo.
 
 ### Option B: Manual Copy
 

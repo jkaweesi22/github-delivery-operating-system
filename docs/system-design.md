@@ -316,9 +316,12 @@ Approvers configured via workflow inputs; no hardcoded usernames.
 | 1 | Ensure `.github/workflows` exists in target |
 | 2 | Check for existing `delivery-os-*.yml` files — **abort if any exist** |
 | 3 | Copy `trigger-*.yml` → `delivery-os-*.yml`, substitute `REPO_ORG`, `VERSION` |
-| 4 | Print next steps (tag, secrets, labels) |
+| 4 | Optionally create labels (`--with-labels`; requires `gh` CLI, repo on GitHub) |
+| 5 | Print next steps (tag, secrets, labels) |
 
 **Non-destructive:** Never overwrites; exits with error on conflict.
+
+**Label creation fallback:** If `--with-labels` skips (e.g. `gh` not authenticated), use `scripts/create-labels.sh` from the consumer repo.
 
 ---
 

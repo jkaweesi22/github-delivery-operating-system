@@ -277,6 +277,44 @@ jobs:
 
 ---
 
+## Required Labels
+
+Governance workflows apply labels to issues. Create these labels in your consumer repo before use.
+
+**Option 1 — Installer with `--with-labels`** (requires `gh` CLI, repo on GitHub):
+
+```bash
+REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels /path/to/consumer-repo
+```
+
+**Option 2 — Standalone script** (when installer skips labels):
+
+```bash
+cd /path/to/consumer-repo
+bash /path/to/github-delivery-operating-system/scripts/create-labels.sh
+```
+
+**Option 3 — Manual** (GitHub UI or `gh label create`):
+
+| Label | Color |
+|-------|-------|
+| intake | 0E8A16 |
+| bug | D93F0B |
+| sprint | 1D76DB |
+| sprint-active | 1D76DB |
+| planning | 5319E7 |
+| sprint-planning | 5319E7 |
+| task | 7057FF |
+| qa | FBCA04 |
+| qa-request | FBCA04 |
+| production | D93F0B |
+| release | B60205 |
+| approval | 0E8A16 |
+| ready-for-deploy | 0E8A16 |
+| risk | B60205 |
+
+---
+
 ## Required Secrets
 
 | Secret | Required | Description |

@@ -70,18 +70,23 @@ done
 
 # 6. Optionally create labels in consumer repo (requires gh CLI + git repo)
 LABELS_CREATED=0
+LABELS_SKIP_REASON=""
 if [ "$WITH_LABELS" = true ]; then
   if ! command -v gh &>/dev/null; then
-    echo "  Skipped labels: gh CLI not installed. Install from https://cli.github.com/"
+    LABELS_SKIP_REASON="gh CLI not installed. Install from https://cli.github.com/"
+    echo "  Skipped labels: $LABELS_SKIP_REASON"
   elif [ ! -d "${TARGET_DIR}/.git" ]; then
-    echo "  Skipped labels: ${TARGET_DIR} is not a git repository."
+    LABELS_SKIP_REASON="${TARGET_DIR} is not a git repository."
+    echo "  Skipped labels: $LABELS_SKIP_REASON"
   else
     # Resolve to absolute path so cd works reliably
     TARGET_ABS="$(cd "$TARGET_DIR" && pwd)"
     if ! (cd "$TARGET_ABS" && gh auth status &>/dev/null); then
-      echo "  Skipped labels: gh CLI not authenticated. Run: gh auth login"
+      LABELS_SKIP_REASON="gh CLI not authenticated. Run: gh auth login"
+      echo "  Skipped labels: $LABELS_SKIP_REASON"
     elif ! (cd "$TARGET_ABS" && gh repo view &>/dev/null); then
-      echo "  Skipped labels: Target repo not accessible. Ensure it has a GitHub remote and you have push access."
+      LABELS_SKIP_REASON="Target repo not on GitHub or no push access. Push the repo and ensure remote is set."
+      echo "  Skipped labels: $LABELS_SKIP_REASON"
     else
       LABELS=(
         "intake:0E8A16"
@@ -146,8 +151,11 @@ if [ $COPIED -gt 0 ]; then
   echo "Next steps:"
   echo "  1. (Optional) Pin to a release tag: git tag v1.0.0 && git push origin v1.0.0, then set VERSION=v1.0.0"
   if [ $LABELS_CREATED -eq 0 ]; then
-    echo "  2. Add labels in consumer repo (or re-run with --with-labels):"
-    echo "     gh label create intake --color 0E8A16"
+    [ -n "$LABELS_SKIP_REASON" ] && echo "  2. Labels skipped: $LABELS_SKIP_REASON"
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    TARGET_ABS="$(cd "$TARGET_DIR" && pwd)"
+    echo "     Create labels: cd $TARGET_ABS && bash $SCRIPT_DIR/create-labels.sh"
+    echo "     Or manually: gh label create intake --color 0E8A16"
     echo "     gh label create bug --color D93F0B"
     echo "     gh label create sprint --color 1D76DB"
     echo "     gh label create sprint-active --color 1D76DB"
