@@ -22,18 +22,21 @@ body:
     validations:
       required: true
 
-  - type: markdown
+  - type: input
+    id: sprint_start
     attributes:
-      value: |
-        ### Sprint Dates
-        **📅 [Open calendar](https://raw.githack.com/jkaweesi22/github-delivery-operating-system/main/docs/sprint-calendar.html)** — pick dates, enter this repo's URL, click Create. Dates will appear below.
+      label: "Sprint Start"
+      description: "Format: YYYY-MM-DD"
+      placeholder: "2026-03-07"
+    validations:
+      required: true
 
   - type: input
-    id: sprint_dates
+    id: sprint_end
     attributes:
-      label: "Sprint Dates"
-      description: "YYYY-MM-DD to YYYY-MM-DD (from calendar or type)"
-      placeholder: "2026-03-07 to 2026-03-21"
+      label: "Sprint End"
+      description: "Format: YYYY-MM-DD"
+      placeholder: "2026-03-21"
     validations:
       required: true
 
