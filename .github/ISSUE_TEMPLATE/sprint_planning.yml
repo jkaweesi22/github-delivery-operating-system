@@ -26,64 +26,16 @@ body:
     attributes:
       value: |
         ### Sprint Dates
-        Select start and end (scroll and click). Or use the custom field below for any dates.
-
-  - type: dropdown
-    id: sprint_start_year
-    attributes:
-      label: "Start Year"
-      options: ["2024", "2025", "2026", "2027", "2028", "2029", "2030"]
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_start_month
-    attributes:
-      label: "Start Month"
-      options: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_start_day
-    attributes:
-      label: "Start Day"
-      options: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_end_year
-    attributes:
-      label: "End Year"
-      options: ["2024", "2025", "2026", "2027", "2028", "2029", "2030"]
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_end_month
-    attributes:
-      label: "End Month"
-      options: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_end_day
-    attributes:
-      label: "End Day"
-      options: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
-    validations:
-      required: true
+        **📅 [Open calendar](https://raw.githack.com/jkaweesi22/github-delivery-operating-system/main/docs/sprint-calendar.html)** — pick dates, enter this repo's URL, click Create. Dates will appear below.
 
   - type: input
-    id: sprint_dates_custom
+    id: sprint_dates
     attributes:
-      label: "Or custom dates (optional)"
-      description: "Override above: YYYY-MM-DD to YYYY-MM-DD"
+      label: "Sprint Dates"
+      description: "YYYY-MM-DD to YYYY-MM-DD (from calendar or type)"
       placeholder: "2026-03-07 to 2026-03-21"
     validations:
-      required: false
+      required: true
 
   - type: textarea
     id: sprint_goal

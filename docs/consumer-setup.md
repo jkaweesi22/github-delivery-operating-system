@@ -78,6 +78,8 @@ Child issues are created **automatically** when:
 
 **Required:** Use the `sprint_planning.yml` template (install with `--with-templates`). The template provides the correct form structure.
 
+**Sprint dates:** Use the calendar picker (link in the form), or select from dropdowns, or enter custom dates. The calendar opens in a new tab — enter your repo URL, pick start/end, then click Create to open the issue with dates pre-filled.
+
 Each line under "Sprint Features" becomes a child issue with `Parent Sprint: #N` in the body.
 
 ---

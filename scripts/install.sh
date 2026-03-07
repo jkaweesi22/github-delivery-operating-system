@@ -86,9 +86,10 @@ for wf in "${WORKFLOWS[@]}"; do
   fi
 done
 
-# 3. Optionally copy issue templates
+# 3. Optionally copy issue templates and sprint calendar
 TEMPLATES_COPIED=0
-if [ "$WITH_TEMPLATES" = true ] && [ -d "$TEMPLATES_SRC" ]; then
+if [ "$WITH_TEMPLATES" = true ]; then
+  if [ -d "$TEMPLATES_SRC" ]; then
   for tpl in "$TEMPLATES_SRC"/*.yml; do
     [ -f "$tpl" ] || continue
     name=$(basename "$tpl")
@@ -104,6 +105,22 @@ if [ "$WITH_TEMPLATES" = true ] && [ -d "$TEMPLATES_SRC" ]; then
       TEMPLATES_COPIED=$((TEMPLATES_COPIED + 1))
     fi
   done
+  fi
+  CALENDAR_SRC="${REPO_ROOT}/docs/sprint-calendar.html"
+  if [ -f "$CALENDAR_SRC" ]; then
+    mkdir -p "${TARGET_ABS}/docs"
+    dest="${TARGET_ABS}/docs/sprint-calendar.html"
+    if [ -f "$dest" ] && [ "$OVERWRITE" != "true" ]; then
+      echo "  Skipped (exists): docs/sprint-calendar.html"
+    elif [ "$DRY_RUN" = "true" ]; then
+      echo "  [dry-run] Would create: docs/sprint-calendar.html"
+      TEMPLATES_COPIED=$((TEMPLATES_COPIED + 1))
+    else
+      cp "$CALENDAR_SRC" "$dest"
+      echo "  Created: docs/sprint-calendar.html"
+      TEMPLATES_COPIED=$((TEMPLATES_COPIED + 1))
+    fi
+  fi
 fi
 
 # 4. Optionally create labels via gh CLI (must match setup-labels.yml)
