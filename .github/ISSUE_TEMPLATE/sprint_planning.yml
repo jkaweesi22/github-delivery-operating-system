@@ -22,61 +22,52 @@ body:
     validations:
       required: true
 
-  - type: markdown
-    attributes:
-      value: "### Sprint Start Date"
-
   - type: dropdown
-    id: sprint_start_year
+    id: sprint_dates
     attributes:
-      label: "Start Year"
-      options: ["2024", "2025", "2026", "2027", "2028"]
-      default: 2
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_start_month
-    attributes:
-      label: "Start Month"
-      options: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_start_day
-    attributes:
-      label: "Start Day"
-      options: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
-    validations:
-      required: true
-
-  - type: markdown
-    attributes:
-      value: "### Sprint End Date"
-
-  - type: dropdown
-    id: sprint_end_year
-    attributes:
-      label: "End Year"
-      options: ["2024", "2025", "2026", "2027", "2028"]
-      default: 2
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_end_month
-    attributes:
-      label: "End Month"
-      options: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-    validations:
-      required: true
-
-  - type: dropdown
-    id: sprint_end_day
-    attributes:
-      label: "End Day"
-      options: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
+      label: "Sprint Dates"
+      description: "Select a 2-week sprint (scroll to find your dates)"
+      options:
+        - "2026-03-07 to 2026-03-21"
+        - "2026-03-14 to 2026-03-28"
+        - "2026-03-21 to 2026-04-04"
+        - "2026-03-28 to 2026-04-11"
+        - "2026-04-04 to 2026-04-18"
+        - "2026-04-11 to 2026-04-25"
+        - "2026-04-18 to 2026-05-02"
+        - "2026-04-25 to 2026-05-09"
+        - "2026-05-02 to 2026-05-16"
+        - "2026-05-09 to 2026-05-23"
+        - "2026-05-16 to 2026-05-30"
+        - "2026-05-23 to 2026-06-06"
+        - "2026-06-06 to 2026-06-20"
+        - "2026-06-13 to 2026-06-27"
+        - "2026-06-20 to 2026-07-04"
+        - "2026-06-27 to 2026-07-11"
+        - "2026-07-04 to 2026-07-18"
+        - "2026-07-11 to 2026-07-25"
+        - "2026-07-18 to 2026-08-01"
+        - "2026-07-25 to 2026-08-08"
+        - "2026-08-01 to 2026-08-15"
+        - "2026-08-08 to 2026-08-22"
+        - "2026-08-15 to 2026-08-29"
+        - "2026-08-22 to 2026-09-05"
+        - "2026-08-29 to 2026-09-12"
+        - "2026-09-05 to 2026-09-19"
+        - "2026-09-12 to 2026-09-26"
+        - "2026-09-19 to 2026-10-03"
+        - "2026-09-26 to 2026-10-10"
+        - "2026-10-03 to 2026-10-17"
+        - "2026-10-10 to 2026-10-24"
+        - "2026-10-17 to 2026-10-31"
+        - "2026-10-24 to 2026-11-07"
+        - "2026-10-31 to 2026-11-14"
+        - "2026-11-07 to 2026-11-21"
+        - "2026-11-14 to 2026-11-28"
+        - "2026-11-21 to 2026-12-05"
+        - "2026-11-28 to 2026-12-12"
+        - "2026-12-05 to 2026-12-19"
+        - "2026-12-12 to 2026-12-26"
     validations:
       required: true
 

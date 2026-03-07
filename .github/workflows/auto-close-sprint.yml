@@ -41,22 +41,12 @@ jobs:
             const dateMatch1 = sprintBody.match(/Sprint Dates[\s\S]*?(\d{4}-\d{2}-\d{2})\s*to\s*(\d{4}-\d{2}-\d{2})/i);
             const dateMatch2a = sprintBody.match(/Sprint Start Date[\s\S]*?(\d{4}-\d{2}-\d{2})/i);
             const dateMatch2b = sprintBody.match(/Sprint End Date[\s\S]*?(\d{4}-\d{2}-\d{2})/i);
-            const startYearM = sprintBody.match(/Start Year[\s\S]*?(\d{4})/i);
-            const startMonthM = sprintBody.match(/Start Month[\s\S]*?(\d{1,2})/i);
-            const startDayM = sprintBody.match(/Start Day[\s\S]*?(\d{1,2})/i);
-            const endYearM = sprintBody.match(/End Year[\s\S]*?(\d{4})/i);
-            const endMonthM = sprintBody.match(/End Month[\s\S]*?(\d{1,2})/i);
-            const endDayM = sprintBody.match(/End Day[\s\S]*?(\d{1,2})/i);
             if (dateMatch1) {
               startDate = new Date(dateMatch1[1]);
               endDate = new Date(dateMatch1[2]);
             } else if (dateMatch2a && dateMatch2b) {
               startDate = new Date(dateMatch2a[1]);
               endDate = new Date(dateMatch2b[1]);
-            } else if (startYearM && startMonthM && startDayM && endYearM && endMonthM && endDayM) {
-              const pad = (n) => String(n).padStart(2, '0');
-              startDate = new Date(`${startYearM[1]}-${pad(startMonthM[1])}-${pad(startDayM[1])}`);
-              endDate = new Date(`${endYearM[1]}-${pad(endMonthM[1])}-${pad(endDayM[1])}`);
             }
             if (!startDate || !endDate) {
               console.log("Sprint dates not found.");
