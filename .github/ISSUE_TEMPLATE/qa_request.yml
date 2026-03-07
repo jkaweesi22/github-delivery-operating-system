@@ -1,13 +1,13 @@
-name: QA Request
-description: Request QA testing for a sprint task or bug fix
-title: "QA REQUEST - "
+name: "QA REQUEST"
+description: "Request QA testing for a sprint task or bug fix"
+title: "QA REQUEST - [Feature/Issue]"
 labels: ["qa-request"]
 
 body:
   - type: input
     id: related_issue
     attributes:
-      label: Related Sprint Task Issue (#)
+      label: "Related Sprint Task Issue (#)"
       placeholder: "#101"
     validations:
       required: true
@@ -15,14 +15,14 @@ body:
   - type: textarea
     id: what_to_test
     attributes:
-      label: What to Test
+      label: "What to Test"
     validations:
       required: true
 
   - type: textarea
     id: env_build
     attributes:
-      label: Environment + Build Link
+      label: "Environment + Build Link"
       placeholder: |
         Staging build link:
         TestFlight / APK / Web URL:
@@ -30,7 +30,7 @@ body:
   - type: textarea
     id: acceptance_criteria
     attributes:
-      label: Acceptance Criteria
+      label: "Acceptance Criteria"
       placeholder: |
         - Expected behavior
         - Edge cases
@@ -38,18 +38,18 @@ body:
   - type: checkboxes
     id: artifacts
     attributes:
-      label: Artifacts
+      label: "Artifacts"
       options:
-        - label: Screenshots
-        - label: Logs
-        - label: Video Recording
-        - label: Crash Report
+        - label: "Screenshots"
+        - label: "Logs"
+        - label: "Video Recording"
+        - label: "Crash Report"
 
   - type: dropdown
     id: qa_outcome
     attributes:
-      label: QA Outcome
+      label: "QA Outcome"
       options:
-        - Pending
-        - Pass
-        - Fail
+        - "Pending"
+        - "Pass"
+        - "Fail"

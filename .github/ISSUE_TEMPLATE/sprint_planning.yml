@@ -1,13 +1,13 @@
-name: Sprint Planning
-description: Plan sprint scope; each feature becomes a task issue
-title: "SPRINT - "
-labels: ["sprint", "planning", "sprint-planning"]
+name: "SPRINT PLANNING"
+description: "Plan sprint scope; each feature becomes a task issue"
+title: "SPRINT - [Sprint Name]"
+labels: ["sprint", "planning"]
 
 body:
   - type: markdown
     attributes:
       value: |
-        # Sprint Planning
+        # SPRINT PLANNING
 
         Enter ONE feature per line.
         Do not use bullets.
@@ -17,30 +17,30 @@ body:
   - type: input
     id: sprint_name
     attributes:
-      label: Sprint Name
-      placeholder: Sprint 12 - March 1–14
+      label: "Sprint Name"
+      placeholder: "Sprint 12 - March 1–14"
     validations:
       required: true
 
   - type: input
     id: sprint_dates
     attributes:
-      label: Sprint Dates
-      placeholder: YYYY-MM-DD to YYYY-MM-DD
+      label: "Sprint Dates"
+      placeholder: "YYYY-MM-DD to YYYY-MM-DD"
     validations:
       required: true
 
   - type: textarea
     id: sprint_goal
     attributes:
-      label: Sprint Goal
+      label: "Sprint Goal"
     validations:
       required: true
 
   - type: textarea
     id: sprint_features
     attributes:
-      label: Sprint Features (One Per Line)
+      label: "Sprint Features (One Per Line)"
       placeholder: |
         Implement burn-down chart
         Add sprint health indicator
@@ -51,8 +51,8 @@ body:
   - type: dropdown
     id: sprint_approval
     attributes:
-      label: Sprint Approved
+      label: "Sprint Approved"
       options:
-        - Pending
-        - Approved
-        - Rejected
+        - "Pending"
+        - "Approved"
+        - "Rejected"

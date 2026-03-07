@@ -1,39 +1,27 @@
-# Delivery OS – Auto Close Sprint
-# Reusable: update sprint progress, burn-down, auto-close when 100%, optional Telegram alert
-name: Delivery OS – Auto Close Sprint
+name: Update Sprint Progress + Intelligence + Auto Close
 
 on:
-  workflow_call:
-    inputs:
-      enable_telegram_alert:
-        required: false
-        type: boolean
-        default: false
-    secrets:
-      TELEGRAM_BOT_TOKEN:
-        required: false
-      TELEGRAM_CHAT_ID:
-        required: false
+  issues:
+    types: [closed]
 
 jobs:
-  delivery-os-sprint-progress:
-    name: Update sprint progress and auto-close
+  update-sprint:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+
     steps:
       - name: Update sprint health, burn-down, and auto-close
         uses: actions/github-script@v7
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          ENABLE_TELEGRAM: ${{ inputs.enable_telegram_alert }}
         with:
           script: |
             const issue = context.payload.issue;
-            const body = issue.body || '';
+            const body = issue.body || "";
 
-            const parentMatch = body.match(/Parent Sprint:\s*#?(\d+)/);
+            const parentMatch = body.match(/Parent Sprint:\s*#(\d+)/);
             if (!parentMatch) return;
 
             const sprintNumber = parseInt(parentMatch[1]);
@@ -44,14 +32,12 @@ jobs:
               issue_number: sprintNumber
             });
 
-            const sprintBody = sprintIssue.data.body || '';
+            const sprintBody = sprintIssue.data.body || "";
 
-            // Extract sprint dates from parent body
-            const dateMatch = sprintBody.match(/Sprint Dates[\s\S]*?(\d{4}-\d{2}-\d{2}).*?(\d{4}-\d{2}-\d{2})/i) ||
-              sprintBody.match(/(\d{4}-\d{2}-\d{2}).*?(\d{4}-\d{2}-\d{2})/);
+            const dateMatch = sprintBody.match(/Sprint Dates.*?(\d{4}-\d{2}-\d{2}).*?(\d{4}-\d{2}-\d{2})/s);
 
             if (!dateMatch) {
-              console.log('Sprint dates not found.');
+              console.log("Sprint dates not found.");
               return;
             }
 
@@ -63,11 +49,10 @@ jobs:
             const elapsed = now - startDate;
             const timePercent = Math.max(0, Math.min(100, Math.round((elapsed / totalDuration) * 100)));
 
-            // Get children
             const { data: allIssues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'all',
+              state: "all",
               per_page: 100
             });
 
@@ -75,24 +60,23 @@ jobs:
               i.body && i.body.includes(`Parent Sprint: #${sprintNumber}`)
             );
 
-            const closedChildren = children.filter(i => i.state === 'closed');
+            const closedChildren = children.filter(i => i.state === "closed");
 
             const progressPercent = children.length === 0
               ? 0
               : Math.round((closedChildren.length / children.length) * 100);
 
-            // Time-based health
-            let healthEmoji = '🟢';
-            if (progressPercent < timePercent - 10) healthEmoji = '🔴';
-            else if (progressPercent < timePercent) healthEmoji = '🟡';
+            let healthEmoji = "🟢";
+            if (progressPercent < timePercent - 10) healthEmoji = "🔴";
+            else if (progressPercent < timePercent) healthEmoji = "🟡";
 
-            // Burn-down bar
             const totalBars = 20;
             const filledBars = Math.round((progressPercent / 100) * totalBars);
-            const burnDown = '█'.repeat(filledBars) + '░'.repeat(totalBars - filledBars);
+            const burnDown =
+              "█".repeat(filledBars) + "░".repeat(totalBars - filledBars);
 
             let updatedBody = sprintBody;
-            updatedBody = updatedBody.replace(/## 🚦 Sprint Status[\s\S]*?---/g, '');
+            updatedBody = updatedBody.replace(/## 🚦 Sprint Status[\s\S]*?---/g, "");
 
             updatedBody +=
               `\n\n---\n\n## 🚦 Sprint Status\n\n` +
@@ -109,26 +93,26 @@ jobs:
               body: updatedBody
             });
 
-            // Auto close + Telegram alert
             if (progressPercent === 100) {
+
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: sprintNumber,
-                state: 'closed'
+                state: "closed"
               });
 
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: sprintNumber,
-                body: '🎉 All sprint tasks complete. Sprint automatically closed.'
+                body: "🎉 All sprint tasks complete. Sprint automatically closed."
               });
 
-              if (process.env.ENABLE_TELEGRAM === 'true' && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+              if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
                 await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     chat_id: process.env.TELEGRAM_CHAT_ID,
                     text:

@@ -1,4 +1,4 @@
-name: Bug Report
+name: 🐞 Bug Report
 description: Report a defect or unexpected behavior
 title: "[BUG] "
 labels:
@@ -34,8 +34,8 @@ body:
   - type: input
     id: build
     attributes:
-      label: Build / Version
-      placeholder: e.g. 4227, v1.3.0
+      label: "Build / Version"
+      placeholder: "e.g. 4227, v1.3.0"
     validations:
       required: true
 

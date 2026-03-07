@@ -1,0 +1,22 @@
+name: Auto-assign QA submissions
+
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  assign:
+    if: |
+      (contains(github.event.issue.labels.*.name || fromJSON('[]'), 'qa') ||
+       contains(github.event.issue.labels.*.name || fromJSON('[]'), 'qa-request')) &&
+      vars.QA_ASSIGNEES != ''
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Assign QA team to QA submission issues
+        uses: pozil/auto-assign-issue@v1
+        with:
+          assignees: ${{ vars.QA_ASSIGNEES }}
+          labels: qa, qa-request
+          repo-token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,5 +1,5 @@
-name: Task
-description: Create a structured task with owner, priority, and acceptance criteria
+name: "Task"
+description: "Create a structured task with owner, priority, and acceptance criteria"
 title: "TASK - "
 labels: ["task"]
 
@@ -7,31 +7,49 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## Task Overview
+        ## 🧩 Task Overview
         Fill out the details below to create a structured, trackable task.
 
   - type: input
     id: title_summary
     attributes:
-      label: Task Summary
-      description: One-line description of the task
-      placeholder: Implement login validation error handling
+      label: "Task Summary"
+      description: "One-line description of the task"
+      placeholder: "Implement login validation error handling"
     validations:
       required: true
 
   - type: textarea
     id: description
     attributes:
-      label: Description
-      description: Provide context and details
-      placeholder: Explain what needs to be done and why...
+      label: "Description"
+      description: "Provide context and details"
+      placeholder: "Explain what needs to be done and why..."
     validations:
       required: true
 
   - type: dropdown
+    id: owner
+    attributes:
+      label: "Owner (Select if applicable)"
+      description: "Select the responsible person"
+      options:
+        - Unassigned
+        - Other (Specify Below)
+    validations:
+      required: true
+
+  - type: input
+    id: custom_owner
+    attributes:
+      label: "Custom Owner (if 'Other')"
+      description: "Type name if not listed above"
+      placeholder: "Enter full name"
+
+  - type: dropdown
     id: priority
     attributes:
-      label: Priority
+      label: "Priority"
       options:
         - P0 - Critical
         - P1 - High
@@ -43,7 +61,7 @@ body:
   - type: dropdown
     id: status
     attributes:
-      label: Status
+      label: "Status"
       options:
         - Backlog
         - In Progress
@@ -56,8 +74,8 @@ body:
   - type: textarea
     id: acceptance_criteria
     attributes:
-      label: Acceptance Criteria
-      description: Define what 'done' looks like
+      label: "Acceptance Criteria"
+      description: "Define what 'done' looks like"
       placeholder: |
         - [ ] Requirement 1
         - [ ] Requirement 2
@@ -68,6 +86,6 @@ body:
   - type: textarea
     id: artifacts
     attributes:
-      label: Artifacts / Links (Optional)
-      description: Add PR links, designs, screenshots, docs
-      placeholder: https://figma.com/..., https://github.com/..., etc.
+      label: "Artifacts / Links (Optional)"
+      description: "Add PR links, designs, screenshots, docs"
+      placeholder: "https://figma.com/..., https://github.com/..., etc."

@@ -1,318 +1,98 @@
 # Consumer Setup Guide
 
-This guide explains how to integrate the Delivery Operating System into your repository as a **reusable, non-destructive, additive** governance layer.
+This guide explains how to install the Delivery Operating System into your repository. Workflows and templates are **copied directly** into your repo. No `workflow_call` or external references.
 
 ---
 
-## Integration Model
+## Installation
 
-The Delivery OS integrates via **trigger workflows** that call reusable workflows from this repository. It does **not**:
+From the `github-delivery-operating-system` repo root:
 
-- Overwrite existing workflows
-- Modify existing issue templates
-- Delete or rename labels
-- Alter branch protection rules
-
-Integration is **additive**, **opt-in**, and **reversible**.
-
----
-
-## Minimal Integration
-
-### 1. Reference the Workflow
-
-Use `@main` for latest, or pin to a tag (e.g. `@v1.0.0`) for production stability:
-
-```
-uses: your-org/github-delivery-operating-system/.github/workflows/<workflow>.yml@main
-```
-
-To pin to a specific version, create a tag first:
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-Then use `@v1.0.0` in your workflow references.
+# Copy workflows only
+./scripts/install.sh /path/to/your-repo
 
-### 2. Add Trigger Workflows
+# Copy workflows + issue templates (required for sprint child creation)
+./scripts/install.sh --with-templates /path/to/your-repo
 
-Create these files in your repository's `.github/workflows/` directory. Replace `your-org` with your org or username.
+# Copy workflows + templates + create labels via gh CLI
+./scripts/install.sh --with-templates --with-labels /path/to/your-repo
 
-#### Release Control Trigger
-
-Create `.github/workflows/delivery-os-release-control.yml`:
-
-```yaml
-name: Enable Delivery OS – Release Control
-
-on:
-  issues:
-    types: [opened, labeled]
-  pull_request:
-    types: [labeled]
-
-jobs:
-  call-release-control:
-    permissions:
-      issues: write
-      pull-requests: write
-    if: |
-      (github.event_name == 'pull_request' && contains(github.event.label.name, 'production')) ||
-      (github.event_name == 'issues' && (
-        (github.event.action == 'labeled' && github.event.label.name == 'production') ||
-        (github.event.action == 'opened' && contains(join(github.event.issue.labels.*.name, ','), 'production'))
-      ))
-    uses: your-org/github-delivery-operating-system/.github/workflows/release-control.yml@main
-    with:
-      release_approver: "@release-approver"
-      production_label: "production"
-      enable_alerts: true
-      enable_telegram: true
-      enable_whatsapp: false
-    secrets: inherit
+# Update existing install (overwrite workflows and templates)
+./scripts/install.sh --with-templates --overwrite /path/to/your-repo
 ```
 
-#### Sprint Orchestration Trigger
+**Options:**
 
-Create `.github/workflows/delivery-os-sprint-orchestration.yml`:
+| Flag | Description |
+|------|-------------|
+| `--with-templates` | Copy issue templates (sprint, task, bug, QA, production release) |
+| `--with-labels` | Create labels via `gh` CLI (requires `gh auth` and GitHub remote) |
+| `--overwrite` | Replace existing workflow/template files |
 
-```yaml
-name: Enable Delivery OS – Sprint Orchestration
+By default, existing files are **skipped**. Use `--overwrite` to update.
 
-on:
-  issues:
-    types: [opened, edited, labeled]
-  workflow_dispatch:
-    inputs:
-      issue_number:
-        description: "Sprint planning issue number"
-        required: true
-        type: number
+---
 
-jobs:
-  call-sprint-orchestration:
-    permissions:
-      issues: write
-      contents: read
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'issues'
-    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-orchestration.yml@main
-    with:
-      sprint_planning_label: "sprint-planning"
-      sprint_label: "sprint"
-      intake_label: "intake"
-      enable_child_task_creation: false
-      enable_milestone_assignment: false
-      issue_number: ${{ github.event.inputs.issue_number || github.event.issue.number }}
-    secrets: inherit
-```
+## What Gets Installed
 
-**Without child tasks** (default): Sprint orchestration validates labels but does not create child issues. Use when teams rely on Jira, Linear, or other tools for task tracking.
+| Workflow | Purpose |
+|----------|---------|
+| `sprint-child-creator.yml` | Creates child issues when a sprint planning issue (title contains `SPRINT -`) is opened |
+| `auto-close-sprint.yml` | Updates burn-down, sprint health; auto-closes sprint when 100% complete |
+| `notify-release-approver.yml` | Pings release approver when a production release issue is opened |
+| `authorize-deployment.yml` | Dual approval (release approver + QA) before deployment |
+| `auto-assign-qa.yml` | Assigns QA team to issues with `qa` or `qa-request` label |
+| `telegram-issues.yml` | Sends Telegram alerts for bugs, QA, sprints, releases, PR merges |
+| `setup-labels.yml` | One-time workflow to create all required labels |
 
-**With child tasks enabled**: Add to your sprint trigger:
+---
 
-```yaml
-    with:
-      enable_child_task_creation: true
-      enable_milestone_assignment: true
-      # ... other inputs
-```
+## Sprint Child Creation
 
-**Alternative – Sprint Child Creator (standalone):** For a simpler flow that creates children immediately when a sprint issue is opened (title "SPRINT -"), use the standalone workflow:
+Child issues are created **automatically** when:
 
-```yaml
-# .github/workflows/delivery-os-sprint-child-creator.yml
-name: Enable Delivery OS – Sprint Child Creator
+1. An issue is opened with a title containing `SPRINT -` (e.g. `SPRINT - Sprint 12`)
+2. The issue body contains a section `### Sprint Features (One Per Line)` with one feature per line
 
-on:
-  issues:
-    types: [opened]
+**Required:** Use the `sprint_planning.yml` template (install with `--with-templates`). The template provides the correct form structure.
 
-jobs:
-  call-sprint-child-creator:
-    permissions:
-      issues: write
-      contents: read
-    uses: your-org/github-delivery-operating-system/.github/workflows/sprint-child-creator.yml@main
-    with:
-      title_prefix: "SPRINT -"
-      sprint_label: "sprint"
-      intake_label: "intake"
-    secrets: inherit
-```
+Each line under "Sprint Features" becomes a child issue with `Parent Sprint: #N` in the body.
 
-#### Notify Release Approver (Optional)
+---
 
-Create `.github/workflows/delivery-os-notify-release-approver.yml` to ping the release approver when a production release issue is opened:
+## Configuration
 
-```yaml
-name: Enable Delivery OS – Notify Release Approver
+### Repo Variables (Settings → Secrets and variables → Actions → Variables)
 
-on:
-  issues:
-    types: [opened]
+| Variable | Description |
+|----------|-------------|
+| `RELEASE_APPROVER` | GitHub username of release approver (for notify + authorize) |
+| `QA_APPROVER` | GitHub username of QA approver (for dual approval) |
+| `QA_ASSIGNEES` | Comma-separated usernames for QA auto-assignment (e.g. `user1,user2`) |
+| `PROJECT_NAME` | Optional; shown in release approval notifications |
 
-jobs:
-  call-notify-release-approver:
-    permissions:
-      issues: write
-    if: contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
-    uses: your-org/github-delivery-operating-system/.github/workflows/notify-release-approver.yml@main
-    with:
-      release_approver_username: "aMugabi"
-      production_label: "production"
-      project_name: "My Project"
-```
+### Secrets (optional)
 
-#### Authorize Deployment – Dual Approval (Optional)
+| Secret | Used By |
+|--------|---------|
+| `TELEGRAM_BOT_TOKEN` | telegram-issues, auto-close-sprint |
+| `TELEGRAM_CHAT_ID` | telegram-issues, auto-close-sprint |
 
-Create `.github/workflows/delivery-os-authorize-deployment.yml` for dual approval (release approver + QA lead):
+### Telegram Alerts
 
-```yaml
-name: Enable Delivery OS – Authorize Deployment
+1. Create a bot via [@BotFather](https://t.me/BotFather); copy the token.
+2. Start a chat with your bot or add it to a group/channel.
+3. Get the chat ID: send a message, then visit `https://api.telegram.org/bot<TOKEN>/getUpdates` and read `chat.id`.
+4. Add both secrets in **Settings → Secrets and variables → Actions**.
 
-on:
-  issue_comment:
-    types: [created]
-
-jobs:
-  call-authorize-deployment:
-    permissions:
-      issues: write
-    if: contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')
-    uses: your-org/github-delivery-operating-system/.github/workflows/authorize-deployment.yml@main
-    with:
-      release_approver_username: "aMugabi"
-      qa_approver_username: "jkaweesi22"
-      production_label: "production"
-```
-
-#### Auto Close Sprint (Optional)
-
-Create `.github/workflows/delivery-os-auto-close-sprint.yml` to update burn-down and auto-close when all child tasks complete:
-
-```yaml
-name: Enable Delivery OS – Auto Close Sprint
-
-on:
-  issues:
-    types: [closed]
-
-jobs:
-  call-auto-close-sprint:
-    permissions:
-      issues: write
-    if: contains(github.event.issue.body || '', 'Parent Sprint')
-    uses: your-org/github-delivery-operating-system/.github/workflows/auto-close-sprint.yml@main
-    with:
-      enable_telegram_alert: false
-    secrets: inherit
-```
-
-#### Intake Governance Trigger
-
-Create `.github/workflows/delivery-os-intake-governance.yml`:
-
-```yaml
-name: Enable Delivery OS – Intake Governance
-
-on:
-  issues:
-    types: [opened, edited, labeled]
-  pull_request:
-    types: [opened, edited, labeled]
-
-jobs:
-  call-intake-governance:
-    permissions:
-      issues: write
-      pull-requests: write
-    uses: your-org/github-delivery-operating-system/.github/workflows/intake-governance.yml@main
-    with:
-      intake_label: "intake"
-    secrets: inherit
-```
-
-#### Telegram Alerts Trigger
-
-Create `.github/workflows/delivery-os-telegram-alerts.yml` (Phanerooapp-style: issues opened/closed/reopened, comments, PR merged):
-
-```yaml
-name: Enable Delivery OS – Telegram Alerts
-
-on:
-  issues:
-    types: [opened, closed, reopened]
-  issue_comment:
-    types: [created]
-  pull_request:
-    types: [closed]
-
-jobs:
-  call-telegram-alerts:
-    if: |
-      github.event_name == 'issues' ||
-      github.event_name == 'issue_comment' ||
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
-    uses: your-org/github-delivery-operating-system/.github/workflows/telegram-alerts.yml@main
-    with:
-      bug_label: "bug"
-      qa_label: "qa"
-      qa_request_label: "qa-request"
-      sprint_label: "sprint"
-      planning_label: "planning"
-      sprint_planning_label: "sprint-planning"
-      sprint_active_label: "sprint-active"
-      production_label: "production"
-      release_approver_username: "aMugabi"
-      timezone: "Africa/Nairobi"
-      enable_telegram: true
-    secrets: inherit
-```
-
-#### WhatsApp Alerts Trigger
-
-Create `.github/workflows/delivery-os-whatsapp-alerts.yml`:
-
-```yaml
-name: Enable Delivery OS – WhatsApp Alerts
-
-on:
-  pull_request:
-    types: [closed]
-  issues:
-    types: [labeled]
-
-jobs:
-  call-whatsapp-alerts:
-    if: |
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-      (github.event_name == 'issues' && contains(github.event.label.name, 'production'))
-    uses: your-org/github-delivery-operating-system/.github/workflows/whatsapp-alerts.yml@main
-    with:
-      production_label: "production"
-      enable_whatsapp: true
-    secrets: inherit
-```
+Alerts are sent for: bugs, QA requests, sprints, production releases, PR merges to main. If secrets are not set, the workflow skips sending (no error).
 
 ---
 
 ## Required Labels
 
-Governance workflows apply labels to issues. Create these labels in your consumer repo before use.
-
-**Option 1 — Setup Labels workflow** (recommended, no token needed):
-
-The installer copies `setup-labels.yml` to your repo. Push, then go to **Actions → Setup Labels → Run workflow**.
-
-**Option 2 — Installer with `--with-labels`** (requires `gh` CLI, repo on GitHub):
-
-```bash
-REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels /path/to/consumer-repo
-```
-
-**Option 3 — Manual** (GitHub UI or `gh label create`):
+Run **Actions → Setup Labels → Run workflow** once, or use `--with-labels` when installing (requires `gh` CLI).
 
 | Label | Color |
 |-------|-------|
@@ -329,85 +109,32 @@ REPO_ORG=jkaweesi22 ./scripts/install.sh --with-labels /path/to/consumer-repo
 | release | B60205 |
 | approval | 0E8A16 |
 | ready-for-deploy | 0E8A16 |
+| declined | B60205 |
 | risk | B60205 |
 
 ---
 
-## Required Secrets
+## Issue Templates (with `--with-templates`)
 
-| Secret | Required | Description |
-|--------|----------|-------------|
-| None | — | Governance workflows require no secrets |
-
----
-
-## Optional Secrets (Alerting)
-
-| Secret | Used By | Description |
-|--------|---------|-------------|
-| `TELEGRAM_BOT_TOKEN` | Telegram Alerts | Bot token from @BotFather |
-| `TELEGRAM_CHAT_ID` | Telegram Alerts | Chat or channel ID |
-| `WHATSAPP_ACCESS_TOKEN` | WhatsApp (Meta) | Meta Graph API token |
-| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp (Meta) | Phone number ID |
-| `WHATSAPP_RECIPIENT_NUMBER` | WhatsApp (Meta/Twilio) | Recipient in E.164 |
-| `TWILIO_ACCOUNT_SID` | WhatsApp (Twilio) | Twilio account SID |
-| `TWILIO_AUTH_TOKEN` | WhatsApp (Twilio) | Twilio auth token |
-| `TWILIO_WHATSAPP_NUMBER` | WhatsApp (Twilio) | Twilio WhatsApp number |
-
-**Secrets inheritance:** Use `secrets: inherit` in your trigger workflows. The consumer repository's secrets are passed to the reusable workflow. Optionally, configure org-level secrets for cross-repo reuse.
+| Template | Purpose |
+|----------|---------|
+| `sprint_planning.yml` | Sprint planning; each feature line → child issue |
+| `task.yml` | Structured task with priority, status, acceptance criteria |
+| `qa_request.yml` | QA testing request |
+| `production_release_qa_signoff.yml` | Production release + QA sign-off |
+| `bug_report.yml` | Bug report with platform, severity, steps |
 
 ---
 
-## Optional Configuration Overrides
+## Uninstalling
 
-All governance behavior is configurable via workflow inputs:
-
-| Input | Default | Description |
-|-------|---------|-------------|
-| `release_approver` | `@release-approver` | Legacy fallback for approval mention |
-| `default_release_approver` | — | Fallback when issue body omits Release Approver |
-| `production_label` | `production` | Label that triggers release gate |
-| `sprint_label` | `sprint` | Label applied to child sprint issues |
-| `sprint_planning_label` | `sprint-planning` | Label that triggers sprint orchestration |
-| `intake_label` | `intake` | Label applied to new intake items |
-| `enable_child_task_creation` | `false` | Create child issues from sprint deliverable lines |
-| `enable_milestone_assignment` | `false` | Assign parent milestone to child issues |
-| `title_prefix` | `SPRINT -` | Title prefix for sprint-child-creator |
-| `release_approver_username` | (required) | Username for notify-release-approver, authorize-deployment |
-| `qa_approver_username` | (required) | QA lead username for dual approval |
-| `enable_telegram_alert` | `false` | Telegram alert when sprint 100% complete (auto-close-sprint) |
-| `risk_label` | `risk` | Label that triggers risk alerts |
-| `enable_alerts` | `false` | Master switch for release-control alerts |
-| `enable_telegram` | `false` | Enable Telegram notifications |
-| `enable_whatsapp` | `false` | Enable WhatsApp notifications |
-
-Override in your trigger workflow:
-
-```yaml
-with:
-  release_approver: "@my-team/release-approvers"
-  production_label: "ready-for-release"
-  enable_alerts: true
-  enable_telegram: true
-  enable_whatsapp: false
-```
-
----
-
-## Safe Removal (Uninstalling Delivery OS)
-
-1. **Delete workflow files** from `.github/workflows/`:
-   - `delivery-os-release-control.yml`
-   - `delivery-os-sprint-orchestration.yml`
-   - `delivery-os-sprint-child-creator.yml`
-   - `delivery-os-intake-governance.yml`
-   - `delivery-os-auto-close-sprint.yml`
-   - `delivery-os-notify-release-approver.yml`
-   - `delivery-os-authorize-deployment.yml`
-   - `delivery-os-telegram-alerts.yml`
-   - `delivery-os-whatsapp-alerts.yml`
+1. Delete these files from `.github/workflows/`:
+   - `sprint-child-creator.yml`
+   - `auto-close-sprint.yml`
+   - `notify-release-approver.yml`
+   - `authorize-deployment.yml`
+   - `auto-assign-qa.yml`
+   - `telegram-issues.yml`
    - `setup-labels.yml`
 
-2. **Remove secrets** (optional): If you added Delivery OS–specific secrets, remove them from Settings → Secrets.
-
-3. **No central repo modifications required.** The `github-delivery-operating-system` repository is not modified when you uninstall.
+2. Optionally remove templates from `.github/ISSUE_TEMPLATE/` and repo variables/secrets.

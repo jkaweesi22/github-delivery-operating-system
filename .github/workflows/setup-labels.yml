@@ -1,6 +1,6 @@
-# Copy to .github/workflows/setup-labels.yml in your consumer repo.
 # Run once: Actions → Setup Labels → Run workflow
 # Uses built-in GITHUB_TOKEN — no personal token or gh CLI needed.
+# Labels must match scripts/install.sh --with-labels (same order and colors).
 
 name: Setup Labels
 
@@ -32,6 +32,7 @@ jobs:
               { name: 'release', color: 'B60205' },
               { name: 'approval', color: '0E8A16' },
               { name: 'ready-for-deploy', color: '0E8A16' },
+              { name: 'declined', color: 'B60205' },
               { name: 'risk', color: 'B60205' },
             ];
             let created = 0;
