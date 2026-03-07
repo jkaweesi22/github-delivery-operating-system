@@ -40,5 +40,6 @@ jobs:
             title_safe="${feature//\"/\\\"}"
             gh issue create \
               --title "$title_safe" \
-              --body "Parent Sprint: #$parent_number"
+              --body "Parent Sprint: #$parent_number" \
+              --label "sprint-active"
           done < features.txt
