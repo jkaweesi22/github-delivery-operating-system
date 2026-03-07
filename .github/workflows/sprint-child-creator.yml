@@ -4,11 +4,6 @@ on:
   issues:
     types: [opened]
 
-# Required: repo must have Settings → Actions → Workflow permissions → Read and write
-permissions:
-  issues: write
-  contents: read
-
 jobs:
   create-child-issues:
     if: contains(github.event.issue.title, 'SPRINT -')
@@ -29,21 +24,21 @@ jobs:
           printf '%s' "$ISSUE_BODY" | \
             awk '/^### Sprint Features/{flag=1;next}/^###/{if(flag) exit}flag' | \
             sed '/^[[:space:]]*$/d' > features.txt
+          echo "has_features<<EOF" >> $GITHUB_OUTPUT
+          [ -s features.txt ] && echo "true" >> $GITHUB_OUTPUT || echo "false" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Child Issues
+        if: steps.extract.outputs.has_features == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           parent_number="${{ github.event.issue.number }}"
-          body_content=$(printf 'Parent Sprint: #%s\n\n---\n*Created by Delivery OS Sprint Child Creator*' "$parent_number")
-
           while IFS= read -r feature; do
             feature=$(echo "$feature" | xargs)
             [ -z "$feature" ] && continue
             title_safe="${feature//\"/\\\"}"
-
             gh issue create \
               --title "$title_safe" \
-              --body "$body_content" \
-              --label "sprint-active"
+              --body "Parent Sprint: #$parent_number"
           done < features.txt
