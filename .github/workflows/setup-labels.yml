@@ -7,6 +7,10 @@ name: Setup Labels
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   create-labels:
     runs-on: ubuntu-latest

@@ -1,20 +1,39 @@
 #!/usr/bin/env bash
 # GitHub Delivery Operating System — Installer
 # Copies workflows and templates directly (Phanerooapp-style).
-# Use --overwrite to replace existing files.
+# Default: skip existing files (safe). Use --overwrite to replace.
 
 set -e
 
-# Parse args: [--with-templates] [--with-labels] [--overwrite] [target_dir]
+usage() {
+  echo "Usage: $0 [options] [target_dir]"
+  echo ""
+  echo "Options:"
+  echo "  --with-templates   Copy issue templates"
+  echo "  --with-labels      Create labels via gh CLI"
+  echo "  --overwrite        Replace existing workflows/templates (default: skip)"
+  echo "  --no-overwrite     Explicitly skip existing files (default behavior)"
+  echo "  --dry-run          Show what would happen without changing files"
+  echo "  -h, --help         Show this help"
+  echo ""
+  echo "Default: existing files are NOT overwritten. Use --overwrite to replace."
+}
+
+# Parse args: [--with-templates] [--with-labels] [--overwrite|--no-overwrite] [--dry-run] [target_dir]
+# Default: skip existing files (safe). Use --overwrite to replace.
 TARGET_DIR="."
 WITH_TEMPLATES=false
 WITH_LABELS=false
 OVERWRITE=false
+DRY_RUN=false
 while [ $# -gt 0 ]; do
   case "$1" in
     --with-templates) WITH_TEMPLATES=true; shift ;;
     --with-labels) WITH_LABELS=true; shift ;;
     --overwrite) OVERWRITE=true; shift ;;
+    --no-overwrite) OVERWRITE=false; shift ;;
+    --dry-run) DRY_RUN=true; shift ;;
+    -h|--help) usage; exit 0 ;;
     *) TARGET_DIR="$1"; shift ;;
   esac
 done
@@ -28,7 +47,18 @@ TARGET_ABS="$(cd "$TARGET_DIR" && pwd)"
 
 echo "=== GitHub Delivery Operating System ==="
 echo "Target: ${TARGET_ABS}"
-echo ""
+if [ "$OVERWRITE" = "true" ]; then
+  echo ""
+  echo "⚠️  WARNING: Overwrite mode — existing Delivery OS workflows/templates will be REPLACED."
+  echo "    (Your other workflows/templates with different names are not affected.)"
+  echo ""
+elif [ "$DRY_RUN" = "true" ]; then
+  echo "Mode: dry-run (no files will be changed)"
+  echo ""
+else
+  echo "Mode: skip-existing (existing workflows/templates will NOT be overwritten)"
+  echo ""
+fi
 
 # 1. Ensure target .github structure
 mkdir -p "${TARGET_ABS}/.github/workflows"
@@ -46,6 +76,9 @@ for wf in "${WORKFLOWS[@]}"; do
   fi
   if [ -f "$dest" ] && [ "$OVERWRITE" != "true" ]; then
     echo "  Skipped (exists): ${wf}.yml"
+  elif [ "$DRY_RUN" = "true" ]; then
+    echo "  [dry-run] Would create: ${wf}.yml"
+    WORKFLOWS_COPIED=$((WORKFLOWS_COPIED + 1))
   else
     cp "$src" "$dest"
     echo "  Created: ${wf}.yml"
@@ -62,6 +95,9 @@ if [ "$WITH_TEMPLATES" = true ] && [ -d "$TEMPLATES_SRC" ]; then
     dest="${TARGET_ABS}/.github/ISSUE_TEMPLATE/${name}"
     if [ -f "$dest" ] && [ "$OVERWRITE" != "true" ]; then
       echo "  Skipped (exists): ${name}"
+    elif [ "$DRY_RUN" = "true" ]; then
+      echo "  [dry-run] Would create template: ${name}"
+      TEMPLATES_COPIED=$((TEMPLATES_COPIED + 1))
     else
       cp "$tpl" "$dest"
       echo "  Created template: ${name}"
@@ -74,7 +110,10 @@ fi
 LABELS_CREATED=0
 LABELS_SKIP_REASON=""
 if [ "$WITH_LABELS" = true ]; then
-  if ! command -v gh &>/dev/null; then
+  if [ "$DRY_RUN" = "true" ]; then
+    LABELS_SKIP_REASON="Skipped in dry-run."
+    echo "  [dry-run] Labels would be created (skipped)"
+  elif ! command -v gh &>/dev/null; then
     LABELS_SKIP_REASON="gh CLI not installed. Install from https://cli.github.com/"
     echo "  Skipped labels: $LABELS_SKIP_REASON"
   elif [ ! -d "${TARGET_ABS}/.git" ]; then
@@ -124,9 +163,14 @@ fi
 
 echo ""
 if [ $WORKFLOWS_COPIED -gt 0 ] || [ $TEMPLATES_COPIED -gt 0 ] || [ $LABELS_CREATED -gt 0 ]; then
-  [ $WORKFLOWS_COPIED -gt 0 ] && echo "Installed ${WORKFLOWS_COPIED} workflow(s)."
-  [ $TEMPLATES_COPIED -gt 0 ] && echo "Copied ${TEMPLATES_COPIED} issue template(s)."
-  [ $LABELS_CREATED -gt 0 ] && echo "Created ${LABELS_CREATED} label(s)."
+  if [ "$DRY_RUN" = "true" ]; then
+    [ $WORKFLOWS_COPIED -gt 0 ] && echo "Would install ${WORKFLOWS_COPIED} workflow(s)."
+    [ $TEMPLATES_COPIED -gt 0 ] && echo "Would copy ${TEMPLATES_COPIED} issue template(s)."
+  else
+    [ $WORKFLOWS_COPIED -gt 0 ] && echo "Installed ${WORKFLOWS_COPIED} workflow(s)."
+    [ $TEMPLATES_COPIED -gt 0 ] && echo "Copied ${TEMPLATES_COPIED} issue template(s)."
+    [ $LABELS_CREATED -gt 0 ] && echo "Created ${LABELS_CREATED} label(s)."
+  fi
   echo ""
   echo "Next steps:"
   echo "  1. Create labels: Actions → Setup Labels → Run workflow"
@@ -142,8 +186,12 @@ if [ $WORKFLOWS_COPIED -gt 0 ] || [ $TEMPLATES_COPIED -gt 0 ] || [ $LABELS_CREAT
   echo ""
   echo "See docs/consumer-setup.md for full configuration."
 else
-  echo "No new files created (existing files were skipped)."
-  echo "Use --overwrite to replace existing workflows/templates."
+  if [ "$DRY_RUN" = "true" ]; then
+    echo "Dry run complete. No files were changed."
+  else
+    echo "No new files created (existing files were skipped)."
+    echo "To update: use --overwrite (run with --dry-run first to preview)."
+  fi
 fi
 echo ""
 echo "=== Installation complete ==="

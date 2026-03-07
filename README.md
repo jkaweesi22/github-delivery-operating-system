@@ -29,15 +29,17 @@ From the `github-delivery-operating-system` repo:
 git clone https://github.com/jkaweesi22/github-delivery-operating-system
 cd github-delivery-operating-system
 
-# Copy workflows + templates (recommended for sprint child creation)
+# New install or repo with existing workflows — adds only missing files (safe)
 ./scripts/install.sh --with-templates /path/to/your-repo
 
 # Also create labels via gh CLI (requires gh auth)
 ./scripts/install.sh --with-templates --with-labels /path/to/your-repo
 
-# Update existing install
+# Update Delivery OS (replace existing) — use --dry-run first to preview
 ./scripts/install.sh --with-templates --overwrite /path/to/your-repo
 ```
+
+**Note:** By default, existing files are **never overwritten**. Use `--overwrite` only when updating Delivery OS. See [Consumer Setup](docs/consumer-setup.md) for the full command guide.
 
 **What gets installed:**
 

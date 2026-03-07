@@ -10,10 +10,12 @@ on:
   pull_request:
     types: [closed]
 
+permissions:
+  contents: read
+
 jobs:
   notify:
     runs-on: ubuntu-latest
-
     steps:
       - name: Send Telegram Alert
         shell: bash
@@ -21,10 +23,19 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           RELEASE_APPROVER: ${{ vars.RELEASE_APPROVER || 'release-approver' }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          ACTOR: ${{ github.actor }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          EVENT="${{ github.event_name }}"
-          ACTION="${{ github.event.action }}"
-          ACTOR="${{ github.actor }}"
+          EVENT="${EVENT_NAME}"
+          ACTION="${EVENT_ACTION}"
           TIMESTAMP=$(TZ=Africa/Nairobi date +"%Y-%m-%d %-I:%M %p EAT")
           MESSAGE=""
 
@@ -35,8 +46,8 @@ jobs:
 
           if [ "$EVENT" = "issues" ]; then
 
-            TITLE="${{ github.event.issue.title }}"
-            URL="${{ github.event.issue.html_url }}"
+            TITLE="${ISSUE_TITLE}"
+            URL="${ISSUE_URL}"
 
             if [[ "${{ contains(github.event.issue.labels.*.name || fromJSON('[]'), 'bug') }}" == "true" ]]; then
               if [ "$ACTION" = "opened" ]; then
@@ -85,9 +96,8 @@ jobs:
 
           if [ "$EVENT" = "issue_comment" ]; then
 
-            TITLE="${{ github.event.issue.title }}"
-            URL="${{ github.event.issue.html_url }}"
-            COMMENT_BODY="${{ github.event.comment.body }}"
+            TITLE="${ISSUE_TITLE}"
+            URL="${ISSUE_URL}"
             COMMENT=$(echo "$COMMENT_BODY" | head -c 300)
 
             if [[ "$ACTOR" == "$RELEASE_APPROVER" ]] && echo "$COMMENT_BODY" | grep -iq "declined\|reject\|not approved"; then
@@ -112,13 +122,9 @@ jobs:
           fi
 
           if [ "$EVENT" = "pull_request" ]; then
-            PR_MERGED="${{ github.event.pull_request.merged }}"
-            PR_BASE="${{ github.event.pull_request.base.ref }}"
-            PR_TITLE="${{ github.event.pull_request.title }}"
-            PR_URL="${{ github.event.pull_request.html_url }}"
 
             if [ "$PR_MERGED" = "true" ] && [ "$PR_BASE" = "main" ]; then
-              MESSAGE="🟢🔀 PR MERGED TO MAIN%0A$PR_TITLE%0A$PR_URL%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
+              MESSAGE="🟢🔀 PR MERGED TO MAIN%0A${PR_TITLE}%0A${PR_URL}%0A---%0A👤 $ACTOR%0A🕒 $TIMESTAMP"
             fi
           fi
 

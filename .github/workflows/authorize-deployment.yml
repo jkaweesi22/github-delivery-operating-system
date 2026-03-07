@@ -4,6 +4,9 @@ on:
   issue_comment:
     types: [created]
 
+permissions:
+  issues: write
+
 jobs:
   authorize:
     if: github.event.issue && contains(github.event.issue.labels.*.name || fromJSON('[]'), 'production')

@@ -4,6 +4,19 @@ This guide explains how to install the Delivery Operating System into your repos
 
 ---
 
+## ⚠️ Which Command to Use?
+
+| Situation | Command | What happens |
+|-----------|---------|--------------|
+| **New repo** (no Delivery OS yet) | `./scripts/install.sh --with-templates /path/to/repo` | Installs all workflows and templates |
+| **Repo with existing workflows/templates** (yours + others) | `./scripts/install.sh --with-templates /path/to/repo` | Adds only *missing* Delivery OS files. **Your existing files are NOT touched.** |
+| **Update Delivery OS** (get latest fixes) | `./scripts/install.sh --with-templates --overwrite /path/to/repo` | **Replaces** Delivery OS workflows/templates. Your *other* workflows (different names) stay intact. |
+| **Preview before installing** | `./scripts/install.sh --with-templates --dry-run /path/to/repo` | Shows what would be copied. No files changed. |
+
+**Warning:** `--overwrite` replaces only Delivery OS files (same names). It does **not** delete your other workflows or templates. Use `--dry-run` first if unsure.
+
+---
+
 ## Installation
 
 From the `github-delivery-operating-system` repo root:
@@ -20,6 +33,12 @@ From the `github-delivery-operating-system` repo root:
 
 # Update existing install (overwrite workflows and templates)
 ./scripts/install.sh --with-templates --overwrite /path/to/your-repo
+
+# Preview what would happen (no files changed)
+./scripts/install.sh --with-templates --dry-run /path/to/your-repo
+
+# Explicitly skip existing (same as default)
+./scripts/install.sh --no-overwrite /path/to/your-repo
 ```
 
 **Options:**
@@ -29,8 +48,10 @@ From the `github-delivery-operating-system` repo root:
 | `--with-templates` | Copy issue templates (sprint, task, bug, QA, production release) |
 | `--with-labels` | Create labels via `gh` CLI (requires `gh auth` and GitHub remote) |
 | `--overwrite` | Replace existing workflow/template files |
+| `--no-overwrite` | Explicitly skip existing files (default behavior) |
+| `--dry-run` | Show what would happen without changing any files |
 
-By default, existing files are **skipped**. Use `--overwrite` to update.
+By default, existing files are **skipped** (never overwritten). Use `--overwrite` to replace. Use `--dry-run` to preview changes safely.
 
 ---
 
@@ -123,6 +144,18 @@ Run **Actions → Setup Labels → Run workflow** once, or use `--with-labels` w
 | `qa_request.yml` | QA testing request |
 | `production_release_qa_signoff.yml` | Production release + QA sign-off |
 | `bug_report.yml` | Bug report with platform, severity, steps |
+
+---
+
+## Troubleshooting
+
+### "Resource not accessible by integration" when creating issues
+
+The consumer repo must allow workflows to write. In your consumer repo:
+
+1. Go to **Settings** → **Actions** → **General**
+2. Under **Workflow permissions**, select **Read and write permissions**
+3. Save
 
 ---
 
