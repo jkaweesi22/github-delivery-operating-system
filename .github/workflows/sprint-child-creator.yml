@@ -48,19 +48,16 @@ jobs:
       - name: Extract Sprint Features
         id: extract
         if: steps.check.outputs.is_sprint == 'true'
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          BODY="${{ github.event.issue.body }}"
           # Extract lines between "### Sprint Features" and next ### (GitHub form format)
-          FEATURES=$(echo "$BODY" | \
+          printf '%s' "$ISSUE_BODY" | \
             awk '/^### Sprint Features/{flag=1;next}/^###/{if(flag) exit}flag' | \
-            sed '/^[[:space:]]*$/d')
-
-          echo "features<<EOF" >> $GITHUB_OUTPUT
-          echo "$FEATURES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+            sed '/^[[:space:]]*$/d' > features.txt
 
       - name: Create Child Issues
-        if: steps.check.outputs.is_sprint == 'true' && steps.extract.outputs.features != ''
+        if: steps.check.outputs.is_sprint == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SPRINT_LABEL: ${{ inputs.sprint_label }}
@@ -70,38 +67,36 @@ jobs:
           parent_number="${{ github.event.issue.number }}"
           parent_title="${{ github.event.issue.title }}"
 
+          body_content=$(printf 'Parent Sprint: #%s\n\n---\n*Created by Delivery OS Sprint Child Creator*' "$parent_number")
+
           while IFS= read -r feature; do
             feature=$(echo "$feature" | xargs)
             [ -z "$feature" ] && continue
+            # Escape double quotes in title for safe shell use
+            title_safe="${feature//\"/\\\"}"
 
             if [ -n "$SPRINT_ACTIVE_LABEL" ]; then
               gh issue create \
-                --title "$feature" \
-                --body "Parent Sprint: #$parent_number
-
----
-*Created by Delivery OS Sprint Child Creator*" \
+                --title "$title_safe" \
+                --body "$body_content" \
                 --label "$INTAKE_LABEL" \
                 --label "$SPRINT_LABEL" \
                 --label "$SPRINT_ACTIVE_LABEL"
             else
               gh issue create \
-                --title "$feature" \
-                --body "Parent Sprint: #$parent_number
-
----
-*Created by Delivery OS Sprint Child Creator*" \
+                --title "$title_safe" \
+                --body "$body_content" \
                 --label "$INTAKE_LABEL" \
                 --label "$SPRINT_LABEL"
             fi
-          done <<< "${{ steps.extract.outputs.features }}"
+          done < features.txt
 
       - name: Post summary comment
-        if: steps.check.outputs.is_sprint == 'true' && steps.extract.outputs.features != ''
+        if: steps.check.outputs.is_sprint == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          count=$(echo "${{ steps.extract.outputs.features }}" | grep -c . 2>/dev/null || echo "0")
+          count=$(grep -c . features.txt 2>/dev/null || echo "0")
           gh issue comment "${{ github.event.issue.number }}" \
             --body "## Sprint Child Issues Created
 
