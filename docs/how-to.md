@@ -56,7 +56,7 @@ git push
 2. Select **SPRINT PLANNING**
 3. Fill in:
    - **Sprint Name:** e.g. Sprint 12 - March 1–14
-   - **Sprint Dates:** YYYY-MM-DD to YYYY-MM-DD
+   - **Sprint dates:** Select year, month, and day from dropdowns (scroll and click)
    - **Sprint Goal:** What this sprint achieves
    - **Sprint Features (One Per Line):** One feature per line, no bullets:
      ```
