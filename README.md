@@ -52,9 +52,10 @@ cd github-delivery-operating-system
 
 **Other commands:**
 ```bash
-npx github-delivery-os status .          # Show what's installed
-npx github-delivery-os uninstall .      # Remove workflows
+npx github-delivery-os status .                    # Show what's installed
+npx github-delivery-os uninstall .                 # Remove workflows
 npx github-delivery-os uninstall --with-templates .  # Remove workflows + templates
+npx github-delivery-os uninstall --dry-run .      # Preview (no changes)
 ```
 
 **What gets installed:**
