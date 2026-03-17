@@ -2,6 +2,8 @@
 
 > A GitHub-native Delivery Governance Framework for structured sprint execution, QA review, and collaborative production release control.
 
+[![Socket Badge](https://badge.socket.dev/npm/package/github-delivery-os)](https://socket.dev/npm/package/github-delivery-os)
+
 ---
 
 ## Why This Exists
@@ -47,6 +49,13 @@ cd github-delivery-operating-system
 ```
 
 **Note:** By default, existing files are **never overwritten**. Use `--overwrite` only when updating Delivery OS. See [Consumer Setup](docs/consumer-setup.md) for the full command guide.
+
+**Other commands:**
+```bash
+npx github-delivery-os status .          # Show what's installed
+npx github-delivery-os uninstall .      # Remove workflows
+npx github-delivery-os uninstall --with-templates .  # Remove workflows + templates
+```
 
 **What gets installed:**
 

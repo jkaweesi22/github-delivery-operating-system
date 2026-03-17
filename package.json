@@ -1,6 +1,6 @@
 {
   "name": "github-delivery-os",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A GitHub-native Delivery Governance Framework for structured sprint execution, QA review, and collaborative production release control.",
   "main": "src/install.js",
   "bin": {
@@ -11,13 +11,18 @@
   },
   "keywords": [
     "github",
+    "github-actions",
     "delivery",
     "sprint",
+    "sprint-planning",
     "qa",
     "release",
+    "release-management",
     "governance",
     "workflows",
-    "automation"
+    "automation",
+    "devops",
+    "ci-cd"
   ],
   "author": "",
   "license": "MIT",

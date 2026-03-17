@@ -229,4 +229,117 @@ function runInstall(options) {
   console.log('=== Installation complete ===');
 }
 
-module.exports = { runInstall };
+const TEMPLATES = [
+  'config.yml',
+  'sprint_planning.yml',
+  'task.yml',
+  'qa_request.yml',
+  'production_release_qa_signoff.yml',
+  'bug_report.yml',
+];
+
+function runStatus(options) {
+  const { targetDir = '.' } = options;
+  const targetAbs = path.resolve(process.cwd(), targetDir);
+  const workflowsDest = path.join(targetAbs, '.github', 'workflows');
+  const templatesDest = path.join(targetAbs, '.github', 'ISSUE_TEMPLATE');
+
+  console.log('=== GitHub Delivery Operating System — Status ===');
+  console.log(`Target: ${targetAbs}`);
+  console.log('');
+
+  const installedWorkflows = WORKFLOWS.filter((wf) =>
+    fs.existsSync(path.join(workflowsDest, `${wf}.yml`))
+  );
+  const installedTemplates = TEMPLATES.filter((t) =>
+    fs.existsSync(path.join(templatesDest, t))
+  );
+
+  if (installedWorkflows.length > 0) {
+    console.log('Workflows:');
+    installedWorkflows.forEach((wf) => console.log(`  ✓ ${wf}.yml`));
+    console.log('');
+  }
+  if (installedTemplates.length > 0) {
+    console.log('Templates:');
+    installedTemplates.forEach((t) => console.log(`  ✓ ${t}`));
+    console.log('');
+  }
+
+  const missingWorkflows = WORKFLOWS.filter((wf) => !installedWorkflows.includes(wf));
+  if (missingWorkflows.length > 0) {
+    console.log('Missing workflows:');
+    missingWorkflows.forEach((wf) => console.log(`  ○ ${wf}.yml`));
+    console.log('');
+  }
+
+  if (installedWorkflows.length === 0 && installedTemplates.length === 0) {
+    console.log('Delivery OS is not installed in this repository.');
+    console.log('Run: npx github-delivery-os install --with-templates .');
+  } else {
+    const total = installedWorkflows.length + installedTemplates.length;
+    console.log(`Summary: ${installedWorkflows.length}/${WORKFLOWS.length} workflows, ${installedTemplates.length}/${TEMPLATES.length} templates`);
+  }
+  console.log('');
+}
+
+function runUninstall(options) {
+  const { targetDir = '.', withTemplates = false, dryRun = false } = options;
+  const targetAbs = path.resolve(process.cwd(), targetDir);
+  const workflowsDest = path.join(targetAbs, '.github', 'workflows');
+  const templatesDest = path.join(targetAbs, '.github', 'ISSUE_TEMPLATE');
+
+  console.log('=== GitHub Delivery Operating System — Uninstall ===');
+  console.log(`Target: ${targetAbs}`);
+  if (dryRun) console.log('Mode: dry-run (no files will be deleted)');
+  console.log('');
+
+  let workflowsRemoved = 0;
+  let templatesRemoved = 0;
+
+  for (const wf of WORKFLOWS) {
+    const dest = path.join(workflowsDest, `${wf}.yml`);
+    if (fs.existsSync(dest)) {
+      if (dryRun) {
+        console.log(`  [dry-run] Would remove: ${wf}.yml`);
+      } else {
+        fs.unlinkSync(dest);
+        console.log(`  Removed: ${wf}.yml`);
+      }
+      workflowsRemoved++;
+    }
+  }
+
+  if (withTemplates) {
+    for (const t of TEMPLATES) {
+      const dest = path.join(templatesDest, t);
+      if (fs.existsSync(dest)) {
+        if (dryRun) {
+          console.log(`  [dry-run] Would remove template: ${t}`);
+        } else {
+          fs.unlinkSync(dest);
+          console.log(`  Removed template: ${t}`);
+        }
+        templatesRemoved++;
+      }
+    }
+  }
+
+  console.log('');
+  if (workflowsRemoved > 0 || templatesRemoved > 0) {
+    if (dryRun) {
+      console.log(`Would remove ${workflowsRemoved} workflow(s)${withTemplates ? `, ${templatesRemoved} template(s)` : ''}.`);
+    } else {
+      console.log(`Removed ${workflowsRemoved} workflow(s)${withTemplates ? `, ${templatesRemoved} template(s)` : ''}.`);
+      if (!withTemplates) {
+        console.log('Templates were kept. Re-run with --with-templates to remove them.');
+      }
+    }
+  } else {
+    console.log('No Delivery OS files found to remove.');
+  }
+  console.log('');
+  console.log('=== Uninstall complete ===');
+}
+
+module.exports = { runInstall, runStatus, runUninstall };

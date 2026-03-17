@@ -131,6 +131,14 @@ Alerts are sent for: bugs, QA requests, sprints, production releases, PR merges 
 
 ## Uninstall
 
+**Option A — CLI (recommended):**
+```bash
+npx github-delivery-os uninstall .                    # Remove workflows only
+npx github-delivery-os uninstall --with-templates .    # Remove workflows + templates
+npx github-delivery-os uninstall --dry-run .           # Preview
+```
+
+**Option B — Manual:**
 1. Delete from `.github/workflows/`:
    - `sprint-child-creator.yml`
    - `auto-close-sprint.yml`
