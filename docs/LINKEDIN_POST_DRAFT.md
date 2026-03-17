@@ -24,9 +24,9 @@ You get:
 • Auto-assign QA on qa/qa-request labels
 • Optional Telegram alerts
 
-Open source. MIT. Built for teams that want governance without the overhead.
+Open source. MIT. Published on npm. Built for teams that want governance without the overhead.
 
-Try it: [jkaweesi22.github.io/github-delivery-operating-system](https://jkaweesi22.github.io/github-delivery-operating-system)
+Try it: https://jkaweesi22.github.io/github-delivery-operating-system
 
 #Engineering #DevOps #GitHub #DeliveryManagement #OpenSource
 
@@ -40,7 +40,7 @@ Try it: [jkaweesi22.github.io/github-delivery-operating-system](https://jkaweesi
 
 No new tools. No CI/CD changes. Just structured delivery, embedded in GitHub.
 
-Open source → [link]
+Open source on npm → https://www.npmjs.com/package/github-delivery-os
 
 #GitHub #Engineering #DevOps
 
@@ -56,7 +56,47 @@ GitHub Delivery Operating System adds structured sprint execution, QA governance
 
 Built for teams that want clarity without the overhead.
 
-[link]
+https://jkaweesi22.github.io/github-delivery-operating-system
+
+---
+
+## Option D — Launch-style
+
+**Shipped: GitHub Delivery Operating System**
+
+A GitHub-native framework for sprint execution, QA governance, and production release control — installable in one command.
+
+`npx github-delivery-os install --with-templates .`
+
+What it does:
+• Creates child issues from sprint features (burn-down, auto-close at 100%)
+• Requires dual approval (release + QA) before deploy
+• Auto-assigns QA on issues
+• Optional Telegram alerts
+
+No new tools. No CI/CD changes. Just workflows and templates copied into your repo.
+
+Open source. MIT. On npm.
+
+https://jkaweesi22.github.io/github-delivery-operating-system
+
+#OpenSource #GitHub #DeliveryManagement #Engineering #DevOps
+
+---
+
+## Option E — Hook-first (conversational)
+
+**Sprint tracking in spreadsheets. Release approvals in Slack. "Who signed off?" in prod.**
+
+Sound familiar?
+
+I built **GitHub Delivery Operating System** — one command to add structured delivery, QA gates, and dual approval directly into your GitHub repos. No new tools. No CI/CD changes.
+
+`npx github-delivery-os install --with-templates .`
+
+Open source. MIT. Built for teams that want governance without the overhead.
+
+https://jkaweesi22.github.io/github-delivery-operating-system
 
 ---
 
