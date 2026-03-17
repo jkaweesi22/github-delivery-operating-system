@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
 const WORKFLOWS = [
   'sprint-child-creator',
@@ -141,7 +141,7 @@ function runInstall(options) {
       console.log('  [dry-run] Labels would be created (skipped)');
     } else {
       try {
-        execSync('gh --version', { stdio: 'ignore' });
+        execFileSync('gh', ['--version'], { stdio: 'ignore' });
       } catch {
         labelsSkipReason = 'gh CLI not installed. Install from https://cli.github.com/';
         console.log(`  Skipped labels: ${labelsSkipReason}`);
@@ -154,7 +154,7 @@ function runInstall(options) {
 
       if (!labelsSkipReason) {
         try {
-          execSync('gh auth status', { cwd: targetAbs, stdio: 'ignore' });
+          execFileSync('gh', ['auth', 'status'], { cwd: targetAbs, stdio: 'ignore' });
         } catch {
           labelsSkipReason = 'gh CLI not authenticated. Run: gh auth login';
           console.log(`  Skipped labels: ${labelsSkipReason}`);
@@ -163,7 +163,7 @@ function runInstall(options) {
 
       if (!labelsSkipReason) {
         try {
-          execSync('gh repo view', { cwd: targetAbs, stdio: 'ignore' });
+          execFileSync('gh', ['repo', 'view'], { cwd: targetAbs, stdio: 'ignore' });
         } catch {
           labelsSkipReason = 'Target repo not on GitHub or no push access.';
           console.log(`  Skipped labels: ${labelsSkipReason}`);
@@ -173,7 +173,7 @@ function runInstall(options) {
       if (!labelsSkipReason) {
         for (const [name, color] of LABELS) {
           try {
-            execSync(`gh label create "${name}" --color "${color}"`, {
+            execFileSync('gh', ['label', 'create', name, '--color', color], {
               cwd: targetAbs,
               stdio: 'pipe',
             });
