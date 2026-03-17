@@ -19,7 +19,15 @@ This guide explains how to install the Delivery Operating System into your repos
 
 ## Installation
 
-From the `github-delivery-operating-system` repo root:
+**One command (recommended):**
+
+```bash
+npx github-delivery-os install --with-templates .
+```
+
+From your repo root. Add `--with-labels` to create labels via `gh` CLI.
+
+**Alternative — from the `github-delivery-operating-system` repo root:**
 
 ```bash
 # Copy workflows only
@@ -40,6 +48,15 @@ From the `github-delivery-operating-system` repo root:
 # Explicitly skip existing (same as default)
 ./scripts/install.sh --no-overwrite /path/to/your-repo
 ```
+
+**CLI options (with `npx github-delivery-os install`):**
+
+| Flag | Description |
+|------|-------------|
+| `-t, --with-templates` | Copy issue templates |
+| `-l, --with-labels` | Create labels via `gh` CLI |
+| `-o, --overwrite` | Replace existing files |
+| `-d, --dry-run` | Preview without changing files |
 
 **Options:**
 

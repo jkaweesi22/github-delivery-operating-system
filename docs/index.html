@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GitHub Delivery Operating System — A GitHub-native framework for structured sprint execution, QA review, and collaborative production release control.">
+  <title>GitHub Delivery Operating System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-elevated: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-dim: #388bfd;
+      --success: #3fb950;
+      --warning: #d29922;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      padding: 4rem 0 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+
+    .tagline {
+      font-size: 1.125rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .install-block {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin: 2.5rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      overflow-x: auto;
+    }
+
+    .install-block code {
+      color: var(--accent);
+    }
+
+    .install-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    section {
+      padding: 2rem 0;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    p {
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    ul {
+      color: var(--text-muted);
+      margin-left: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    ul li {
+      margin-bottom: 0.35rem;
+    }
+
+    .features {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .feature {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+    }
+
+    .feature strong {
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .feature span {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      display: block;
+      margin-top: 0.25rem;
+    }
+
+    .workflows-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    .workflows-table th,
+    .workflows-table td {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .workflows-table th {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .workflows-table td:first-child {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      font-size: 0.85rem;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent);
+      color: var(--bg) !important;
+      text-decoration: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      transition: background 0.15s;
+    }
+
+    .cta:hover {
+      background: var(--accent-dim);
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem 0 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>GitHub Delivery Operating System</h1>
+      <p class="tagline">Structured sprint execution, QA governance, and production release control — embedded directly in your GitHub repos.</p>
+    </header>
+
+    <section>
+      <h2>One command to install</h2>
+      <p>Add Delivery OS to any repository. No clone, no config — just run:</p>
+      <div class="install-block">
+        <div class="install-label">From your repo root</div>
+        <code>npx github-delivery-os install --with-templates .</code>
+      </div>
+      <p>Add <code>--with-labels</code> to create labels via <code>gh</code> CLI (requires <code>gh auth</code>). Use <code>--dry-run</code> to preview first.</p>
+    </section>
+
+    <section>
+      <h2>Why this exists</h2>
+      <p>Engineering teams often rely on informal coordination in GitHub — manual approvals, inconsistent sprint tracking, reactive QA, and socially enforced releases. As teams scale, that creates:</p>
+      <ul>
+        <li>Delivery ambiguity</li>
+        <li>QA bottlenecks</li>
+        <li>Unclear accountability</li>
+        <li>Release risk</li>
+        <li>Cross-team misalignment</li>
+      </ul>
+      <p>Delivery OS embeds structured intake, sprint orchestration, QA governance, and release gates directly into your repos — without replacing CI/CD or disrupting workflows.</p>
+    </section>
+
+    <section>
+      <h2>What you get</h2>
+      <div class="features">
+        <div class="feature">
+          <strong>Sprint child creation</strong>
+          <span>Create a sprint issue → each feature line becomes a child issue. Burn-down and auto-close at 100%.</span>
+        </div>
+        <div class="feature">
+          <strong>Dual approval gates</strong>
+          <span>Production releases require both release approver and QA sign-off before deploy.</span>
+        </div>
+        <div class="feature">
+          <strong>Auto-assign QA</strong>
+          <span>Issues with <code>qa</code> or <code>qa-request</code> labels get assigned to your QA team.</span>
+        </div>
+        <div class="feature">
+          <strong>Telegram alerts</strong>
+          <span>Optional notifications for bugs, QA requests, sprints, and releases.</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Workflows installed</h2>
+      <table class="workflows-table">
+        <thead>
+          <tr>
+            <th>Workflow</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>sprint-child-creator</td><td>Creates child issues when a sprint (SPRINT -) is opened</td></tr>
+          <tr><td>auto-close-sprint</td><td>Burn-down, sprint health, auto-close at 100%</td></tr>
+          <tr><td>notify-release-approver</td><td>Pings approver when production release issue opens</td></tr>
+          <tr><td>authorize-deployment</td><td>Dual approval (release approver + QA)</td></tr>
+          <tr><td>auto-assign-qa</td><td>Assigns QA team to qa / qa-request issues</td></tr>
+          <tr><td>telegram-issues</td><td>Telegram alerts for bugs, QA, sprints, releases</td></tr>
+          <tr><td>setup-labels</td><td>One-time workflow to create required labels</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Quick start (after install)</h2>
+      <ol style="color: var(--text-muted); margin-left: 1.25rem;">
+        <li style="margin-bottom: 0.5rem;">Create labels: Actions → Setup Labels → Run workflow</li>
+        <li style="margin-bottom: 0.5rem;">Configure variables: Settings → Secrets and variables → Actions → Variables<br>
+          <code style="color: var(--accent); font-size: 0.85rem;">RELEASE_APPROVER</code>, <code style="color: var(--accent); font-size: 0.85rem;">QA_APPROVER</code>, <code style="color: var(--accent); font-size: 0.85rem;">QA_ASSIGNEES</code></li>
+        <li style="margin-bottom: 0.5rem;">Optional: Add <code>TELEGRAM_BOT_TOKEN</code> and <code>TELEGRAM_CHAT_ID</code> for alerts</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Documentation</h2>
+      <a href="https://github.com/jkaweesi22/github-delivery-operating-system" class="cta">View on GitHub →</a>
+    </section>
+
+    <footer>
+      <p>MIT License · <a href="https://github.com/jkaweesi22/github-delivery-operating-system">github.com/jkaweesi22/github-delivery-operating-system</a></p>
+    </footer>
+  </div>
+</body>
+</html>

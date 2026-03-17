@@ -22,10 +22,17 @@ The **GitHub Delivery Operating System (Delivery OS)** embeds structured intake,
 
 ## Installation
 
-From the `github-delivery-operating-system` repo:
+**One command** (recommended):
 
 ```bash
-# Clone and install into your consumer repo
+npx github-delivery-os install --with-templates .
+```
+
+From your repo root. Add `--with-labels` to create labels via `gh` CLI (requires `gh auth`). Use `--dry-run` to preview first.
+
+**Alternative — clone and run script:**
+
+```bash
 git clone https://github.com/jkaweesi22/github-delivery-operating-system
 cd github-delivery-operating-system
 
@@ -84,6 +91,7 @@ When you open an issue using the **Sprint Planning** template with a title like 
 
 | Document | Description |
 |----------|-------------|
+| **[Landing page & quick start](https://jkaweesi22.github.io/github-delivery-operating-system/)** | Overview, one-command install, features |
 | [Consumer Setup](docs/consumer-setup.md) | Installation, configuration, variables, labels, Telegram, uninstall |
 | [How To](docs/how-to.md) | Create sprints, request releases, approve, report bugs, QA requests |
 | [Architecture](docs/architecture.md) | Workflows, templates, data flow |

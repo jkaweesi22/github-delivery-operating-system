@@ -1,0 +1,44 @@
+{
+  "name": "github-delivery-os",
+  "version": "1.0.0",
+  "description": "A GitHub-native Delivery Governance Framework for structured sprint execution, QA review, and collaborative production release control.",
+  "main": "src/install.js",
+  "bin": {
+    "delivery-os": "./bin/delivery-os.js"
+  },
+  "scripts": {
+    "install:local": "node bin/delivery-os.js install --with-templates ."
+  },
+  "keywords": [
+    "github",
+    "delivery",
+    "sprint",
+    "qa",
+    "release",
+    "governance",
+    "workflows",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jkaweesi22/github-delivery-operating-system"
+  },
+  "homepage": "https://jkaweesi22.github.io/github-delivery-operating-system/",
+  "bugs": {
+    "url": "https://github.com/jkaweesi22/github-delivery-operating-system/issues"
+  },
+  "files": [
+    "bin",
+    "src",
+    ".github/workflows",
+    ".github/ISSUE_TEMPLATE"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "commander": "^11.1.0"
+  }
+}
