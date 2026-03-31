@@ -1,6 +1,6 @@
 {
   "name": "github-delivery-os",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A GitHub-native Delivery Governance Framework for structured sprint execution, QA review, and collaborative production release control.",
   "main": "src/install.js",
   "bin": {
@@ -28,11 +28,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jkaweesi22/github-delivery-operating-system"
+    "url": "https://github.com/Phaneroo/github-delivery-operating-system"
   },
-  "homepage": "https://jkaweesi22.github.io/github-delivery-operating-system/",
+  "homepage": "https://phaneroo.github.io/github-delivery-operating-system/",
   "bugs": {
-    "url": "https://github.com/jkaweesi22/github-delivery-operating-system/issues"
+    "url": "https://github.com/Phaneroo/github-delivery-operating-system/issues"
   },
   "files": [
     "bin",

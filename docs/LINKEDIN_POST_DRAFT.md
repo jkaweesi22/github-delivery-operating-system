@@ -26,7 +26,7 @@ You get:
 
 Open source. MIT. Published on npm. Built for teams that want governance without the overhead.
 
-Try it: https://jkaweesi22.github.io/github-delivery-operating-system
+Try it: https://phaneroo.github.io/github-delivery-operating-system
 
 #Engineering #DevOps #GitHub #DeliveryManagement #OpenSource
 
@@ -56,7 +56,7 @@ GitHub Delivery Operating System adds structured sprint execution, QA governance
 
 Built for teams that want clarity without the overhead.
 
-https://jkaweesi22.github.io/github-delivery-operating-system
+https://phaneroo.github.io/github-delivery-operating-system
 
 ---
 
@@ -78,7 +78,7 @@ No new tools. No CI/CD changes. Just workflows and templates copied into your re
 
 Open source. MIT. On npm.
 
-https://jkaweesi22.github.io/github-delivery-operating-system
+https://phaneroo.github.io/github-delivery-operating-system
 
 #OpenSource #GitHub #DeliveryManagement #Engineering #DevOps
 
@@ -96,7 +96,7 @@ I built **GitHub Delivery Operating System** — one command to add structured d
 
 Open source. MIT. Built for teams that want governance without the overhead.
 
-https://jkaweesi22.github.io/github-delivery-operating-system
+https://phaneroo.github.io/github-delivery-operating-system
 
 ---
 

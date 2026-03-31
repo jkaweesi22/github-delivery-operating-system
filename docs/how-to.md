@@ -9,7 +9,7 @@ Step-by-step instructions for using the Delivery Operating System after installa
 ### Step 1: Clone Delivery OS
 
 ```bash
-git clone https://github.com/jkaweesi22/github-delivery-operating-system
+git clone https://github.com/Phaneroo/github-delivery-operating-system
 cd github-delivery-operating-system
 ```
 

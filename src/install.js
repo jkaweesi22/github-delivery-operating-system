@@ -216,7 +216,7 @@ function runInstall(options) {
       console.log('  4. Copy templates: re-run with --with-templates');
     }
     console.log('');
-    console.log('See https://jkaweesi22.github.io/github-delivery-operating-system/ for full docs.');
+    console.log('See https://phaneroo.github.io/github-delivery-operating-system/ for full docs.');
   } else {
     if (dryRun) {
       console.log('Dry run complete. No files were changed.');

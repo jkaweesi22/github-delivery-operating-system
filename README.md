@@ -35,7 +35,7 @@ From your repo root. Add `--with-labels` to create labels via `gh` CLI (requires
 **Alternative — clone and run script:**
 
 ```bash
-git clone https://github.com/jkaweesi22/github-delivery-operating-system
+git clone https://github.com/Phaneroo/github-delivery-operating-system
 cd github-delivery-operating-system
 
 # New install or repo with existing workflows — adds only missing files (safe)
@@ -101,7 +101,7 @@ When you open an issue using the **Sprint Planning** template with a title like 
 
 | Document | Description |
 |----------|-------------|
-| **[Landing page & quick start](https://jkaweesi22.github.io/github-delivery-operating-system/)** | Overview, one-command install, features |
+| **[Landing page & quick start](https://phaneroo.github.io/github-delivery-operating-system/)** | Overview, one-command install, features |
 | [Consumer Setup](docs/consumer-setup.md) | Installation, configuration, variables, labels, Telegram, uninstall |
 | [How To](docs/how-to.md) | Create sprints, request releases, approve, report bugs, QA requests |
 | [Architecture](docs/architecture.md) | Workflows, templates, data flow |
