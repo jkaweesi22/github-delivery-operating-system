@@ -102,6 +102,8 @@ When you open an issue using the **Sprint Planning** template with a title like 
 | Document | Description |
 |----------|-------------|
 | **[Landing page & quick start](https://phaneroo.github.io/github-delivery-operating-system/)** | Overview, one-command install, features |
+| [PRFAQ](docs/PRFAQ.md) | Product overview and FAQs for all audiences (npm launch, install, governance) |
+| [Press release (npm)](docs/press-release.md) | Formal announcement: Delivery OS on npm |
 | [Consumer Setup](docs/consumer-setup.md) | Installation, configuration, variables, labels, Telegram, uninstall |
 | [How To](docs/how-to.md) | Create sprints, request releases, approve, report bugs, QA requests |
 | [Architecture](docs/architecture.md) | Workflows, templates, data flow |
